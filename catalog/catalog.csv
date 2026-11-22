@@ -23,13 +23,20 @@ equipo,subtema,viz_id,papel,enlace,valor_referencia,tolerancia,streaming,estado
 3,"Comparativa de población alfabetizada en los municipios de Yucatán",3.alfabetizacion,,,,,,pendiente
 3,"Evolución de la población con educación superior",3.educacion_superior,,,,,,pendiente
 3,"Disponibilidad de instituciones educativas en Yucatán",3.instituciones_educativas,,,,,,pendiente
-4,"Inversión extranjera directa (IED) en Yucatán por país de origen",4.ied_por_pais,,,,,,pendiente
-4,"Unidades económicas, empleo y producción en Yucatán (Censos Económicos 2019 y 2024)",4.censos_economicos,,,,,,pendiente
+4,"Inversión extranjera directa (IED) en Yucatán por país de origen",4.ied_por_pais,primaria,https://repodatos.atdt.gob.mx/api_update/secretaria_economia/inversion_extranjera_directa/b2026_01t_act_ef_origen.csv,1596.3,0.1,no,borrador
+4,"Inversión extranjera directa (IED) en Yucatán por país de origen",4.ied_por_pais,secundaria,https://ventanillaunica.economia.gob.mx/media/4T2025_Yucat%C3%A1n.pdf,,,no,borrador
+4,"Unidades económicas, empleo y producción en Yucatán (Censos Económicos 2019 y 2024)",4.censos_economicos,primaria,https://www.inegi.org.mx/contenidos/programas/ce/2024/datosabiertos/conjunto_de_datos_ce_yuc_2024_csv.zip,130438,0,no,borrador
+4,"Unidades económicas, empleo y producción en Yucatán (Censos Económicos 2019 y 2024)",4.censos_economicos,secundaria,https://www.inegi.org.mx/contenidos/programas/ce/2019/Datosabiertos/ce2019_yuc_csv.zip,112503,0,no,borrador
 4,"El pulso de la inversión extranjera: ritmo de la IED en Yucatán (2020-2025)",4.pulso_ied,,,,,,pendiente
 4,"Promesa contra resultado: empleos anunciados y empleo formal en el IMSS",4.promesa_resultado,,,,,,pendiente
 4,"Sobres contra maletines: remesas e inversión extranjera en Yucatán (2020-2025)",4.remesas_ied,,,,,,pendiente
-4,"IED hacia Yucatán por año, ranking y origen (2018-2025)",4.ied_ranking_origen,,,,,,pendiente
-4,"Turismo y derrama económica",4.turismo_derrama,,,,,,pendiente
+4,"IED hacia Yucatán por año, ranking y origen (2018-2025)",4.ied_ranking_origen,primaria,,108.1,0.05,no,pendiente
+4,"IED hacia Yucatán por año, ranking y origen (2018-2025)",4.ied_ranking_origen,secundaria,,,,no,pendiente
+4,"IED hacia Yucatán por año, ranking y origen (2018-2025)",4.ied_ranking_origen,secundaria,,,,no,pendiente
+4,"Turismo y derrama económica",4.turismo_derrama,primaria,,5383,0.5,no,pendiente
+4,"Turismo y derrama económica",4.turismo_derrama,secundaria,,,,no,pendiente
+4,"Turismo y derrama económica",4.turismo_derrama,secundaria,,,,no,pendiente
+4,"Turismo y derrama económica",4.turismo_derrama,secundaria,,,,no,pendiente
 4,"Efecto económico de la apertura al exterior",4.apertura_exterior,,,,,,pendiente
 5,"Treinta años aprendiendo",5.treinta_anos,,,,,,pendiente
 5,"La respuesta",5.la_respuesta,,,,,,pendiente

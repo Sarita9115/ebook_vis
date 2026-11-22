@@ -30,3 +30,7 @@ T4-Inversion_extranjera_en_Yucatan-*.zip
 referencia.py
 fuentes.pdf
 instrucciones.md
+
+# Entorno y datos locales
+.venv/
+datos/
