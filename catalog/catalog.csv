@@ -9,7 +9,7 @@ equipo,subtema,viz_id,papel,enlace,valor_referencia,tolerancia,streaming,estado
 1,"Participación estudiantil y comunidad",1.participacion_estudiantil,,,,,,pendiente
 2,"Dónde se cuida la península",2.donde_se_cuida,,,,,,pendiente
 2,"Yucatán, al lado de sus reservas",2.yucatan_reservas,,,,,,pendiente
-2,"Herbario CICY, plantas vasculares",2.herbario_cicy,primaria,https://www.cicy.mx/sitios/flora%20digital/indice_busqueda.php,15067,0,no,borrador
+2,"Herbario CICY, plantas vasculares",2.herbario_cicy,primaria,http://datos.cicy.mx/?q=node/70/dataset/download,15067,0,no,borrador
 2,"Herbario CICY, plantas vasculares",2.herbario_cicy,secundaria,https://www.dof.gob.mx/nota_detalle.php?codigo=5173091&fecha=30/12/2010,,,no,borrador
 2,"Herbario CICY, plantas vasculares",2.herbario_cicy,secundaria,https://www.inegi.org.mx/programas/ca/2022/#tabulados,,,no,borrador
 2,"Herbario CICY, plantas vasculares",2.herbario_cicy,secundaria,https://www.inegi.org.mx/servicios/api_denue.html,,,no,borrador
