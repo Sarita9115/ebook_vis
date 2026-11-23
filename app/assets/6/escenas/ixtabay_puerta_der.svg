@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55 130" preserveAspectRatio="xMidYMid meet" role="img">
+<style>
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<rect x="1" y="1" width="53" height="128" fill="#F1EBDD" stroke="#9C8F6E" stroke-width="2"/>
+<rect x="8" y="10" width="39" height="50" fill="#EAE3D2" stroke="#CBBF9F" stroke-width="2"/>
+<rect x="8" y="70" width="39" height="50" fill="#EAE3D2" stroke="#CBBF9F" stroke-width="2"/>
+<rect x="53" y="16" width="3" height="10" fill="#6B6457"/>
+<rect x="53" y="104" width="3" height="10" fill="#6B6457"/>
+<circle cx="8" cy="66" r="3.5" fill="#C2562F"/>
+</svg>
