@@ -1,7 +1,12 @@
-"""Proceso del equipo 4. La tarea `oro` publica las tablas en PostgreSQL; las demás quedan pendientes.
+"""Proceso del equipo 4: medallion completo.
 
-`oro` corre pipelines/4/oro.py en un entorno virtual propio (PythonVirtualenvOperator), porque Airflow 2.x fija
-SQLAlchemy 1.4 y el pipeline usa SQLAlchemy 2. El entorno se crea en la primera corrida y se reutiliza.
+ingesta  fuentes (datos/4/ y descargas de INEGI) -> MinIO bronze/4/
+plata    MinIO bronze/4/ -> PostgreSQL plata.*
+oro      plata.* -> PostgreSQL oro.*  (lo que leen la web y el PDF)
+
+Cada capa corre su script de pipelines/4/ en un entorno virtual propio (PythonVirtualenvOperator), porque
+Airflow 2.x fija SQLAlchemy 1.4 y los pipelines usan SQLAlchemy 2. El entorno se crea en la primera corrida y
+se reutiliza. `validacion` y `catalogo` quedan pendientes.
 """
 
 from datetime import datetime
@@ -10,18 +15,33 @@ from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonVirtualenvOperator
 
+PIPELINES = "/opt/airflow/pipelines/4"
+REQUISITOS = ["pandas>=2.2", "sqlalchemy>=2.0", "psycopg2-binary>=2.9", "openpyxl>=3.1", "minio>=7.2"]
 
-def publicar_oro():
-    """Reconstruye las tablas de oro del equipo 4 y las publica en el esquema oro (una sola transacción)."""
+
+def correr_capa(script: str, funcion: str):
+    """Carga pipelines/4/<script> y ejecuta su función principal; imprime lo que dejó la capa."""
     import importlib.util
     import sys
 
     sys.dont_write_bytecode = True  # pipelines/ está montado en solo lectura
-    spec = importlib.util.spec_from_file_location("equipo4_oro", "/opt/airflow/pipelines/4/oro.py")
-    oro = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(oro)
-    for viz_id, df in oro.construir().items():
-        print(f"oro.\"{viz_id}\": {len(df)} filas")
+    spec = importlib.util.spec_from_file_location(f"equipo4_{script[:-3]}", f"/opt/airflow/pipelines/4/{script}")
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    resultado = getattr(modulo, funcion)()
+    for nombre, valor in resultado.items():
+        print(nombre, "->", valor if isinstance(valor, str) else f"{len(valor)} filas")
+
+
+def capa(task_id: str, script: str, funcion: str) -> PythonVirtualenvOperator:
+    return PythonVirtualenvOperator(
+        task_id=task_id,
+        python_callable=correr_capa,
+        op_args=[script, funcion],
+        requirements=REQUISITOS,
+        system_site_packages=False,
+        venv_cache_path="/tmp/venv-equipo4",
+    )
 
 
 with DAG(
@@ -31,15 +51,9 @@ with DAG(
     catchup=False,
     tags=["equipo-4"],
 ) as dag:
-    ingesta = EmptyOperator(task_id="ingesta")
-    plata = EmptyOperator(task_id="plata")
-    oro = PythonVirtualenvOperator(
-        task_id="oro",
-        python_callable=publicar_oro,
-        requirements=["pandas>=2.2", "sqlalchemy>=2.0", "psycopg2-binary>=2.9", "openpyxl>=3.1"],
-        system_site_packages=False,
-        venv_cache_path="/tmp/venv-equipo4",
-    )
+    ingesta = capa("ingesta", "ingesta.py", "ingerir")
+    plata = capa("plata", "plata.py", "construir")
+    oro = capa("oro", "oro.py", "construir")
     validacion = EmptyOperator(task_id="validacion")
     catalogo = EmptyOperator(task_id="catalogo")
     ingesta >> plata >> oro >> validacion >> catalogo

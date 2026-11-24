@@ -1,31 +1,39 @@
-"""Equipo 4 · Inversión extranjera en Yucatán: del bronce a las tablas de oro.
+"""Equipo 4 · Oro: de plata (PostgreSQL, esquema `plata`) a las tablas que dibuja cada figura (esquema `oro`).
 
-El oro vive en PostgreSQL (servicio `postgres` del docker-compose), esquema `oro`, una tabla por visualización:
-oro."4.ied_por_pais", oro."4.censos_economicos", etc. Cada tabla lleva las columnas de metadatos que pide la
-arquitectura (viz_id, fuentes, institución, fecha, responsable). La conexión sale del `.env` de la raíz o de
-`DATABASE_URL`.
+Oro lee solo de plata; nunca del bronce. Una tabla por visualización: oro."4.ied_por_pais",
+oro."4.censos_economicos", etc., más oro."4.turismo_contexto" (cifras que cita el texto de la historia).
+Cada tabla lleva las columnas de metadatos que pide la arquitectura (viz_id, fuentes, institución, fecha de
+obtención, responsable). La fecha de obtención sale del catálogo del bronce (plata."4.bronce_archivos").
 
-Mientras MinIO no tenga los archivos, el bronce es la carpeta `datos/4/` (fuera de Git).
-
-Uso:  docker compose up -d postgres
-      python pipelines/4/oro.py        # reconstruye y publica todas las tablas de oro
+Flujo completo:  python pipelines/4/ingesta.py   # fuentes -> MinIO bronze/4/
+                 python pipelines/4/plata.py     # MinIO -> plata.*
+                 python pipelines/4/oro.py       # plata.* -> oro.*
 """
 from __future__ import annotations
 
-import os
-import urllib.request
-import zipfile
-from datetime import date, datetime
-from functools import lru_cache
+import importlib.util
+import sys
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
-from sqlalchemy import URL, Engine, create_engine, inspect
 
-RAIZ = Path(__file__).resolve().parents[2]
-BRONCE = Path(os.environ.get("EQUIPO4_DATOS", RAIZ / "datos" / "4"))
+
+def _comun():
+    if "equipo4_comun" not in sys.modules:
+        spec = importlib.util.spec_from_file_location("equipo4_comun", Path(__file__).with_name("comun.py"))
+        sys.modules["equipo4_comun"] = m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+    return sys.modules["equipo4_comun"]
+
+
+comun = _comun()
 ESQUEMA = "oro"
 CONTEXTO = "4.turismo_contexto"  # tabla auxiliar: cifras de llegadas que cita el texto de la historia
+
+
+def _plata(nombre: str) -> pd.DataFrame:
+    return comun.leer_tabla("plata", nombre)
 
 # ---------------------------------------------------------------- metadatos de cada visualización
 META = {
@@ -55,13 +63,6 @@ META = {
                   "turismo_comparativos_4T_y_anual.xlsx", "02_llegada_turistas_ocupacion_yucatan.xlsx"]),
 }
 
-INEGI_URL = {
-    "inegi/ce2019_yuc_csv.zip":
-        "https://www.inegi.org.mx/contenidos/programas/ce/2019/Datosabiertos/ce2019_yuc_csv.zip",
-    "inegi/conjunto_de_datos_ce_yuc_2024_csv.zip":
-        "https://www.inegi.org.mx/contenidos/programas/ce/2024/datosabiertos/conjunto_de_datos_ce_yuc_2024_csv.zip",
-}
-
 # Coordenadas (lat, lon) de cada país para el mapa de flujos; Mérida es el destino.
 MERIDA = (20.97, -89.62)
 COORD = {
@@ -84,43 +85,24 @@ CORTO = {
 }
 
 
-def _bronce(nombre: str) -> Path:
-    ruta = BRONCE / nombre
-    if not ruta.exists() and nombre in INEGI_URL:  # fuente con enlace directo: el proceso la descarga
-        ruta.parent.mkdir(parents=True, exist_ok=True)
-        urllib.request.urlretrieve(INEGI_URL[nombre], ruta)
-    if not ruta.exists():
-        raise FileNotFoundError(f"Falta el archivo de bronce {ruta}")
-    return ruta
-
-
 def _metadatos(df: pd.DataFrame, viz_id: str) -> pd.DataFrame:
     m = META[viz_id]
-    fecha = max(datetime.fromtimestamp(_bronce(a).stat().st_mtime).date() for a in m["archivos"])
+    catalogo = _plata("4.bronce_archivos").set_index("archivo")
+    fecha = max(catalogo.loc[a, "fecha_obtencion"] for a in m["archivos"])
     return df.assign(viz_id=viz_id, fuente_primaria=m["fuente_primaria"], fuente_secundaria=m["fuente_secundaria"],
-                     institucion=m["institucion"], fecha_obtencion=fecha.isoformat(), responsable=m["responsable"])
+                     institucion=m["institucion"], fecha_obtencion=fecha, responsable=m["responsable"])
 
 
 def _xlsx(nombre: str) -> pd.DataFrame:
-    """Lee un XLSX de Dalila y repara el texto que viene en doble codificación (YucatÃ¡n -> Yucatán)."""
-    df = pd.read_excel(_bronce(nombre))
-
-    def arreglar(v):
-        if isinstance(v, str) and "Ã" in v:
-            try:
-                return v.encode("latin-1").decode("utf-8")
-            except UnicodeError:
-                return v
-        return v
-    return df.map(arreglar)
+    """Tabla de plata que corresponde a un xlsx del equipo (ya con el texto reparado)."""
+    return _plata(f"4.{Path(nombre).stem}")
 
 
 # ---------------------------------------------------------------- 4.ied_por_pais
 def oro_ied_por_pais() -> pd.DataFrame:
     """Una fila por país de origen y año (2018-2025) con la IED neta hacia Yucatán, en millones de dólares."""
-    d = pd.read_csv(_bronce("b2026_01t_act_ef_origen.csv"), encoding="utf-8-sig")
+    d = _plata("4.ied_entidad_pais_trim")
     d = d[(d.entidad_federativa == "Yucatán") & (d.pais_origen != "Total")].copy()
-    d["anio"] = d.anio_trim.str[:4].astype(int)
     trimestres = d.groupby("anio").anio_trim.nunique()
     d = d[d.anio.between(2018, 2025)]
     g = d.groupby(["pais_origen", "anio"], as_index=False).ied_mdd.sum()
@@ -134,26 +116,12 @@ def oro_ied_por_pais() -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------- 4.censos_economicos
-def _totales_municipio(zip_nombre: str, csv_interno: str, col_ent: str, col_mun: str) -> pd.DataFrame:
-    with zipfile.ZipFile(_bronce(zip_nombre)) as z, z.open(csv_interno) as f:
-        d = pd.read_csv(f, dtype=str, encoding="utf-8-sig", index_col=False,
-                        usecols=[col_ent, col_mun, "CODIGO", "ID_ESTRATO", "UE", "H001A", "A111A"])
-    d = d.apply(lambda s: s.str.strip())
-    total = d.CODIGO.fillna("").isin(["", "TOTAL DE SECTOR"]) & d.ID_ESTRATO.fillna("").eq("")
-    d = d[total & d[col_mun].fillna("").ne("")]
-    return pd.DataFrame({"cve_mun": d[col_mun].str.zfill(3), "ue": d.UE.astype(float),
-                         "personal": d.H001A.astype(float), "produccion_mdp": d.A111A.astype(float)})
-
-
 def oro_censos_economicos() -> pd.DataFrame:
     """Una fila por municipio de Yucatán: unidades, personal y producción bruta en 2018 (CE 2019) y 2023 (CE 2024)."""
-    a = _totales_municipio("inegi/ce2019_yuc_csv.zip", "conjunto_de_datos/ce2019_yuc.csv", "ENTIDAD", "MUNICIPIO")
-    b = _totales_municipio("inegi/conjunto_de_datos_ce_yuc_2024_csv.zip", "conjunto_de_datos/tr_ce_yuc_2024.csv",
-                           "E03", "E04")
-    with zipfile.ZipFile(_bronce("inegi/conjunto_de_datos_ce_yuc_2024_csv.zip")) as z, \
-            z.open("catalogos/tc_entidad_municipio.csv") as f:
-        cat = pd.read_csv(f, dtype=str, encoding="utf-8-sig")
-    cat = cat[cat.E03 == "31"][["E04", "NOM_MUN"]].rename(columns={"E04": "cve_mun", "NOM_MUN": "municipio"})
+    ce = _plata("4.ce_municipio")
+    cat = ce[["cve_mun", "municipio"]].dropna().drop_duplicates("cve_mun")
+    a = ce[ce.anio == 2018][["cve_mun", "ue", "personal", "produccion_mdp"]]
+    b = ce[ce.anio == 2023][["cve_mun", "ue", "personal", "produccion_mdp"]]
     m = a.merge(b, on="cve_mun", suffixes=("_2018", "_2023")).merge(cat, on="cve_mun")
     for v in ("ue", "personal", "produccion_mdp"):
         m[f"cambio_{v}_pct"] = (m[f"{v}_2023"] / m[f"{v}_2018"] - 1) * 100
@@ -223,35 +191,8 @@ CONSTRUCTORES = {
     "4.censos_economicos": oro_censos_economicos,
     "4.ied_ranking_origen": oro_ied_ranking_origen,
     "4.turismo_derrama": oro_turismo_derrama,
+    CONTEXTO: contexto_turismo,
 }
-
-
-CONSTRUCTORES = {**CONSTRUCTORES, CONTEXTO: contexto_turismo}
-
-
-# ---------------------------------------------------------------- conexión a PostgreSQL (esquema oro)
-def _env() -> dict:
-    """Variables de entorno, completadas con el `.env` de la raíz (el mismo que usa docker compose)."""
-    valores = {}
-    ruta = RAIZ / ".env"
-    if ruta.exists():
-        for linea in ruta.read_text().splitlines():
-            linea = linea.strip()
-            if linea and not linea.startswith("#") and "=" in linea:
-                k, v = linea.split("=", 1)
-                valores[k.strip()] = v.strip().strip("'\"")
-    return {**valores, **os.environ}
-
-
-@lru_cache(maxsize=None)
-def motor() -> Engine:
-    """Motor de SQLAlchemy hacia el PostgreSQL del docker compose. `DATABASE_URL` tiene prioridad."""
-    e = _env()
-    url = e.get("DATABASE_URL") or URL.create(
-        "postgresql+psycopg2", username=e.get("POSTGRES_USER"), password=e.get("POSTGRES_PASSWORD"),
-        host=e.get("POSTGRES_HOST", "localhost"), port=int(e.get("POSTGRES_PORT", 5432)),
-        database=e.get("POSTGRES_DB"))
-    return create_engine(url, pool_pre_ping=True)
 
 
 def construir(*viz_ids: str) -> dict[str, pd.DataFrame]:
@@ -261,17 +202,16 @@ def construir(*viz_ids: str) -> dict[str, pd.DataFrame]:
     o PostgreSQL no queda con cambios parciales. Es idempotente: cada ejecución reemplaza las tablas.
     """
     tablas = {v: CONSTRUCTORES[v]() for v in (viz_ids or CONSTRUCTORES)}
-    with motor().begin() as con:
-        for v, df in tablas.items():
-            df.to_sql(v, con, schema=ESQUEMA, if_exists="replace", index=False)
+    comun.escribir(ESQUEMA, tablas)
     return tablas
 
 
 def leer(viz_id: str) -> pd.DataFrame:
-    """Lee la tabla de oro vigente desde PostgreSQL; si no existe todavía, la construye y la publica."""
-    if not inspect(motor()).has_table(viz_id, schema=ESQUEMA):
+    """Lee la tabla de oro vigente desde PostgreSQL; si no existe todavía, la construye desde plata."""
+    try:
+        return comun.leer_tabla(ESQUEMA, viz_id)
+    except LookupError:
         return construir(viz_id)[viz_id]
-    return pd.read_sql_table(viz_id, motor(), schema=ESQUEMA)
 
 
 if __name__ == "__main__":
