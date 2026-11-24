@@ -25,7 +25,7 @@ def figura(datos) -> go.Figure:
     fig.update_layout(
         template="plotly_white", paper_bgcolor=PAPEL, plot_bgcolor=PAPEL,
         font=dict(family="Georgia, serif", color=TINTA, size=14), height=570,
-        margin=dict(l=25, r=25, t=110, b=35),
+        margin=dict(l=25, r=25, t=110, b=74),
         title=dict(text=f"{TITULO}<br><sup>La biblioteca de Yucatán · "
                         "adultos alfabetizados mediante el IEAEY</sup>", x=0.04),
     )
@@ -60,7 +60,8 @@ def figura(datos) -> go.Figure:
                 colorscale=[[0, "#e9e3d6"], [0.035, "#b9d4bb"],
                             [0.27, "#559479"], [1, "#153e34"]],
                 colorbar=dict(title=dict(text="Adultos alfabetizados", side="top"),
-                              orientation="h", x=0.305, y=0, len=0.41, thickness=11),
+                              orientation="h", x=0.305, y=-0.02, yanchor="top",
+                              len=0.41, thickness=11),
                 marker_line_color="#7d9990", marker_line_width=0.6,
                 hovertemplate="<b>%{text}</b><br>%{z:,.0f} adultos alfabetizados<extra></extra>",
             ), row=1, col=1)
@@ -86,14 +87,23 @@ def figura(datos) -> go.Figure:
 
     def paginas(fila):
         cantidad = int(fila["adultos_alfabetizados"])
+        enteros, resto = divmod(cantidad, unidad)
+        fichas = ["Aa"] * enteros
+        if resto:
+            fichas.append(f"+{resto}")
+        if not fichas:
+            return dict(
+                x=[0.53, 0.52], y=[0.91, 0.52],
+                text=[f"<b>{fila['municipio']}</b><br>0 adultos", "Sin alfabetizaciones registradas"],
+            )
         posiciones = [(0.13 + 0.14 * (i % 3) + 0.46 * (i // 12),
                        0.69 - 0.11 * ((i // 3) % 4))
-                      for i in range(cantidad // unidad)]
+                      for i in range(len(fichas))]
         return dict(
             x=[0.53, *[x for x, _ in posiciones]],
             y=[0.91, *[y for _, y in posiciones]],
             text=[f"<b>{fila['municipio']}</b><br>{cantidad:,} adultos",
-                  *["Aa"] * len(posiciones)],
+                  *fichas],
         )
 
     indice_libro = len(fig.data)
@@ -108,7 +118,7 @@ def figura(datos) -> go.Figure:
                       line=dict(color=VERDE, width=1.4), fillcolor="#fffdf6", layer="below")
     fig.add_annotation(
         x=0.52, y=0.13, text=f"{periodo} · Cada «Aa» representa {unidad} adultos<br>"
-                             "Ficha: conteo exacto.<br>IEAEY · cuadro 6.22 del Anuario 2017",
+                             "«+n» indica los adultos restantes.<br>IEAEY · cuadro 6.22 del Anuario 2017",
         showarrow=False, font=dict(size=12),
     )
     fig.update_layout(updatemenus=[dict(

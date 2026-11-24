@@ -1,15 +1,12 @@
-"""3.natalidad: mapa anual y calendario mensual de certificados SINAC.
+"""3.natalidad: mapa anual de certificados SINAC.
 
 Oro: una fila por clave_municipio, anio y mes, con municipio, nacimientos,
 lat y lon (EPSG:4326). Los meses sin fila se conservan como faltantes.
 """
 
-import pandas as pd
 import plotly.graph_objects as go
 
 TITULO = "Natalidad en los municipios de Yucatán"
-MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun",
-         "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
 TINTA = "#173c34"
 PAPEL = "#f7f2e8"
 AGUA = "#217f86"
@@ -115,49 +112,6 @@ def figura(datos) -> go.Figure:
     return fig
 
 
-def figura_calendario(datos) -> go.Figure:
-    """El calendario de los nacimientos. Cada celda representa mes y año."""
-    fig = _base("El calendario de los nacimientos",
-                "Selecciona un municipio y recorre sus meses por año")
-    if datos is None or datos.empty:
-        return _sin_datos(fig)
-
-    anios = sorted(datos["anio"].unique())
-    municipios = list(datos.groupby(["clave_municipio", "municipio"], sort=False))
-    municipios.sort(key=lambda item: str(item[0][1]))
-    mayor = max(1, datos["nacimientos"].max())
-    inicial = max(range(len(municipios)),
-                  key=lambda i: municipios[i][1]["nacimientos"].sum())
-
-    def matriz(sub):
-        return (
-            sub.pivot(index="anio", columns="mes", values="nacimientos")
-            .reindex(index=anios, columns=range(1, 13))
-            .to_numpy()
-        )
-
-    clave_nombre, sub = municipios[inicial]
-    fig.add_trace(go.Heatmap(
-        x=MESES, y=anios, z=matriz(sub), name=clave_nombre[1],
-        zmin=0, zmax=mayor, xgap=4, ygap=4, hoverongaps=False,
-        colorscale=[[0, "#e7eee4"], [0.45, "#7cbdac"], [1, "#14666e"]],
-        colorbar=dict(title="Nacimientos", thickness=14),
-        hovertemplate="<b>%{fullData.name}</b><br>%{x} de %{y}<br>"
-                      "%{z:,.0f} nacimientos<extra></extra>",
-    ))
-    fig.update_layout(updatemenus=[dict(
-        x=0, xanchor="left", y=1.09, yanchor="bottom", active=inicial,
-        buttons=[dict(label=nombre, method="restyle",
-                      args=[{"z": [matriz(grupo)], "name": [nombre]}, [0]])
-                 for (_, nombre), grupo in municipios],
-    )])
-    fig.update_xaxes(type="category", categoryorder="array", categoryarray=MESES,
-                     title_text="Mes de nacimiento", fixedrange=True)
-    fig.update_yaxes(type="category", categoryorder="array", categoryarray=anios,
-                     title_text="Año", fixedrange=True, showgrid=False)
-    return fig
-
-
 if __name__ == "__main__":
     import argparse
     from pathlib import Path
@@ -168,15 +122,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Vista municipal de nacimientos del SINAC.")
     parser.add_argument("--datos", type=Path, default=DATOS / "natalidad.csv")
-    parser.add_argument("--vista", choices=("pulso", "calendario", "ambas"), default="ambas")
     parser.add_argument("--sin-abrir", action="store_true")
     args = parser.parse_args()
     if not args.datos.is_file():
         parser.error(f"No se encontró el CSV: {args.datos}")
-    datos = leer_tabla(args.datos)
-    graficas = []
-    if args.vista in ("pulso", "ambas"):
-        graficas.append(figura(datos))
-    if args.vista in ("calendario", "ambas"):
-        graficas.append(figura_calendario(datos))
-    abrir(graficas, args.vista, args.sin_abrir)
+    abrir([figura(leer_tabla(args.datos))], "pulso", args.sin_abrir)

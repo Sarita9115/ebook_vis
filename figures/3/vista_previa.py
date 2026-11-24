@@ -37,10 +37,29 @@ def leer_tabla(archivo):
     return incluir_mapa(datos)
 
 
+def _orientar_anillos(poligono):
+    """Adapta los anillos GeoJSON a la convención del mapa esférico de Plotly."""
+    for indice, anillo in enumerate(poligono):
+        area = sum(
+            a[0] * b[1] - b[0] * a[1]
+            for a, b in zip(anillo, anillo[1:])
+        )
+        if (indice == 0 and area > 0) or (indice > 0 and area < 0):
+            anillo.reverse()
+
+
 def incluir_mapa(datos):
     limites = DATOS / "yucatan.geojson"
     if limites.is_file():
-        datos.attrs["geojson"] = json.loads(limites.read_text(encoding="utf-8"))
+        geojson = json.loads(limites.read_text(encoding="utf-8"))
+        for elemento in geojson["features"]:
+            geometria = elemento["geometry"]
+            if geometria["type"] == "Polygon":
+                _orientar_anillos(geometria["coordinates"])
+            elif geometria["type"] == "MultiPolygon":
+                for poligono in geometria["coordinates"]:
+                    _orientar_anillos(poligono)
+        datos.attrs["geojson"] = geojson
     return datos
 
 
@@ -89,8 +108,7 @@ def main():
     nacimientos = leer_tabla(args.natalidad)
     adultos = alfabetizacion.datos_locales(args.alfabetizacion)
     abrir(
-        [natalidad.figura(nacimientos), natalidad.figura_calendario(nacimientos),
-         alfabetizacion.figura(adultos)],
+        [natalidad.figura(nacimientos), alfabetizacion.figura(adultos)],
         "equipo-3", args.sin_abrir,
     )
 
