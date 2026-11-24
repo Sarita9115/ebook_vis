@@ -9,11 +9,17 @@ equipo,subtema,viz_id,papel,enlace,valor_referencia,tolerancia,streaming,estado
 1,"Participación estudiantil y comunidad",1.participacion_estudiantil,,,,,,pendiente
 2,"Dónde se cuida la península",2.donde_se_cuida,,,,,,pendiente
 2,"Yucatán, al lado de sus reservas",2.yucatan_reservas,,,,,,pendiente
-2,"Herbario CICY, plantas vasculares",2.herbario_cicy,,,,,,pendiente
+2,"Herbario CICY, plantas vasculares",2.herbario_cicy,primaria,http://datos.cicy.mx/?q=node/70/dataset/download,15067,0,no,borrador
+2,"Herbario CICY, plantas vasculares",2.herbario_cicy,secundaria,https://www.dof.gob.mx/nota_detalle.php?codigo=5173091&fecha=30/12/2010,,,no,borrador
+2,"Herbario CICY, plantas vasculares",2.herbario_cicy,secundaria,https://www.inegi.org.mx/programas/ca/2022/#tabulados,,,no,borrador
+2,"Herbario CICY, plantas vasculares",2.herbario_cicy,secundaria,https://www.inegi.org.mx/servicios/api_denue.html,,,no,borrador
 2,"La fauna de la península, en tu espacio",2.fauna_nom059,,,,,,pendiente
-2,"Unidades económicas de impacto ambiental o relación con la biodiversidad",2.unidades_en_reservas,,,,,,pendiente
-2,"Impacto por municipio ocasionado por la cría de cerdo en la península",2.cria_de_cerdo,,,,,,pendiente
-2,"Cada tipo de negocio situado en cada reserva natural",2.negocios_en_reservas,,,,,,pendiente
+2,"Unidades económicas de impacto ambiental o relación con la biodiversidad",2.unidades_en_reservas,primaria,http://sig.conanp.gob.mx/website/pagsig/info_shape.htm,1456,0.01,no,borrador
+2,"Unidades económicas de impacto ambiental o relación con la biodiversidad",2.unidades_en_reservas,secundaria,https://www.inegi.org.mx/servicios/api_denue.html,,,no,borrador
+2,"Impacto por municipio ocasionado por la cría de cerdo en la península",2.cria_de_cerdo,primaria,https://www.inegi.org.mx/programas/ca/2022/#tabulados,1696764,0.001,no,borrador
+2,"Impacto por municipio ocasionado por la cría de cerdo en la península",2.cria_de_cerdo,secundaria,http://sig.conanp.gob.mx/website/pagsig/info_shape.htm,,,no,borrador
+2,"Cada tipo de negocio situado en cada reserva natural",2.negocios_en_reservas,primaria,https://www.inegi.org.mx/servicios/api_denue.html,4625,0.01,no,borrador
+2,"Cada tipo de negocio situado en cada reserva natural",2.negocios_en_reservas,secundaria,http://sig.conanp.gob.mx/website/pagsig/info_shape.htm,,,no,borrador
 2,"Los ecosistemas que protege la península",2.ecosistemas,,,,,,pendiente
 3,"Crecimiento poblacional y densidad territorial",3.crecimiento_densidad,,,,,,pendiente
 3,"Ranking porcentual del crecimiento poblacional de los estados de México",3.ranking_crecimiento,,,,,,pendiente
