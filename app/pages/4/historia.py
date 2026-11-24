@@ -8,6 +8,7 @@ mientras tanto, el turismo (4.turismo_derrama) → qué cambió en las empresas 
 from __future__ import annotations
 
 import importlib.util
+import threading
 from functools import lru_cache
 from pathlib import Path
 
@@ -29,8 +30,29 @@ FIG = {s: _modulo(RAIZ / "figures" / "4" / s / "figura.py", f"equipo4_{s}")
 
 
 @lru_cache(maxsize=None)
+def _tabla(viz_id: str):
+    return oro.leer(viz_id)
+
+
 def datos(subtema: str):
-    return oro.leer(f"4.{subtema}")
+    return _tabla(f"4.{subtema}")
+
+
+# Las tablas y figuras se guardan en memoria mientras oro no cambie. Cada carga de página y cada callback
+# consultan la huella de oro (oro.version, una consulta ligera): si Airflow republicó o una fuente en
+# streaming modificó filas, se vacían los cachés y lo nuevo aparece al refrescar, sin reiniciar la app.
+_candado = threading.Lock()
+_version_oro = None
+
+
+def sincronizar_oro() -> None:
+    global _version_oro
+    with _candado:
+        v = oro.version()
+        if v != _version_oro:
+            for f in (_tabla, fig_paso, fig_mapa):
+                f.cache_clear()
+            _version_oro = v
 
 
 def _para_pagina(fig, alto=None):
@@ -77,7 +99,7 @@ def cifras() -> dict:
     s = {k: g.set_index("periodo").valor for k, g in t.groupby("serie")}
     for v in s.values():
         v.index = v.index.astype(str)
-    ctx = oro.leer(oro.CONTEXTO)
+    ctx = _tabla(oro.CONTEXTO)
     ctx = ctx[(ctx.tabla == "llegada_centros") & (ctx.periodo == "ene-nov")]
     ext = {c: g.set_index("indicador").valor for c, g in ctx.groupby("dimension")}
 
@@ -143,6 +165,7 @@ def _seccion(num, kicker, titulo, entradilla, *cuerpo, id_=None):
 
 
 def layout():
+    sincronizar_oro()
     c = cifras()
     a, part, der, gas = c["anual"], c["part"], c["derrama"], c["gasto"]
     pico = a.idxmax()
@@ -316,8 +339,14 @@ def registrar(app) -> None:
     """Callbacks: periodo y modo del mapa; paso activo de cada sección guiada."""
     @app.callback(Output("fig-mapa", "figure"), Input("mapa-periodo", "value"), Input("mapa-modo", "value"))
     def _mapa(periodo, modo):
+        sincronizar_oro()
         return fig_mapa(int(periodo[0]), int(periodo[1]), modo)
 
+    def _paso(subtema):
+        def actualizar(paso):
+            sincronizar_oro()
+            return fig_paso(subtema, int(paso or 0))
+        return actualizar
+
     for subtema in ("ied_ranking_origen", "turismo_derrama", "censos_economicos"):
-        app.callback(Output(f"fig-{subtema}", "figure"), Input(f"paso-{subtema}", "data"))(
-            (lambda s: lambda paso: fig_paso(s, int(paso or 0)))(subtema))
+        app.callback(Output(f"fig-{subtema}", "figure"), Input(f"paso-{subtema}", "data"))(_paso(subtema))

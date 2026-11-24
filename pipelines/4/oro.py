@@ -206,6 +206,26 @@ def construir(*viz_ids: str) -> dict[str, pd.DataFrame]:
     return tablas
 
 
+def version(*viz_ids: str) -> tuple:
+    """Huella barata de las tablas de oro, para saber si cambiaron sin volver a leerlas.
+
+    Cambia cuando una tabla se reemplaza (su oid es otro: así publica `construir`) y cuando se insertan,
+    modifican o borran filas en su lugar (cambian el conteo o el xmin máximo, p. ej. una fuente en streaming).
+    """
+    ids = viz_ids or tuple(CONSTRUCTORES)
+    with comun.motor().connect() as con:
+        oids = dict(con.exec_driver_sql(
+            "select relname, oid from pg_class where relnamespace = 'oro'::regnamespace and relkind = 'r'").all())
+        existentes = [v for v in ids if v in oids]
+        filas = {}
+        if existentes:
+            consulta = " union all ".join(
+                f"""select '{v.replace("'", "''")}', count(*), max(xmin::text::bigint) """
+                f'''from {ESQUEMA}."{v.replace('"', '""')}"''' for v in existentes)
+            filas = {n: (c, x) for n, c, x in con.exec_driver_sql(consulta).all()}
+    return tuple((v, oids.get(v), *filas.get(v, (None, None))) for v in ids)
+
+
 def leer(viz_id: str) -> pd.DataFrame:
     """Lee la tabla de oro vigente desde PostgreSQL; si no existe todavía, la construye desde plata."""
     try:
