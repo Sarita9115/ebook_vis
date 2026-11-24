@@ -49,8 +49,8 @@ equipo,subtema,viz_id,papel,enlace,valor_referencia,tolerancia,streaming,estado
 6,"Aporte del sector empresarial al PIB estatal y regional",6.aporte_pib,,,,,,pendiente
 6,"Atracción de capital, empleo y evolución de las unidades económicas en Yucatán",6.atraccion_capital,,,,,,pendiente
 6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,,,,,,pendiente
-6,"Gasto público estatal y fomento económico: hacia dónde va el presupuesto de Yucatán",6.gasto_publico,,,,,,pendiente
-6,"Cambio de uso del suelo y expansión urbana en Yucatán y la zona metropolitana de Mérida",6.cambio_suelo,,,,,,pendiente
-6,"Concentración industrial en el corredor Mérida, Umán y Hunucmá",6.corredor_industrial,,,,,,pendiente
-6,"Relieve y altura edificada de la zona metropolitana de Mérida vistos desde modelos de elevación de 5 m",6.relieve_5m,,,,,,pendiente
-6,"Huella construida, altura y densidad empresarial de Mérida",6.huella_construida,,,,,,pendiente
+6,"Gasto público estatal y fomento económico: hacia dónde va el presupuesto de Yucatán",6.gasto_publico,primaria,https://www.yucatan.gob.mx/docs/transparencia/datos_abiertos/2025/Datos_abiertos_triemstre_4_2025.csv,7.78,0.05,no,pendiente
+6,"Cambio de uso del suelo y expansión urbana en Yucatán y la zona metropolitana de Mérida",6.cambio_suelo,primaria,http://www.conabio.gob.mx/informacion/gis/maps/geo/usv250s7gw.zip,75.95,1.0,no,pendiente
+6,"Concentración industrial en el corredor Mérida, Umán y Hunucmá",6.corredor_industrial,primaria,https://www.inegi.org.mx/contenidos/masiva/denue/denue_31_csv.zip,72.7,1.0,no,pendiente
+6,"Relieve y altura edificada de la zona metropolitana de Mérida vistos desde modelos de elevación de 5 m",6.relieve_5m,primaria,https://www.inegi.org.mx/app/geo2/elevacionesmex/,93.1,1.0,no,pendiente
+6,"Huella construida, altura y densidad empresarial de Mérida",6.huella_construida,primaria,https://docs.overturemaps.org/guides/buildings/,18.7,1.0,no,pendiente
