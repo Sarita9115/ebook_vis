@@ -23,7 +23,8 @@ equipo,subtema,viz_id,papel,enlace,valor_referencia,tolerancia,streaming,estado
 2,"Los ecosistemas que protege la península",2.ecosistemas,,,,,,pendiente
 3,"Crecimiento poblacional y densidad territorial",3.crecimiento_densidad,,,,,,pendiente
 3,"Ranking porcentual del crecimiento poblacional de los estados de México",3.ranking_crecimiento,,,,,,pendiente
-3,"Natalidad y crecimiento poblacional de los municipios de Yucatán",3.natalidad,,,,,,pendiente
+3,"Natalidad y crecimiento poblacional de los municipios de Yucatán",3.natalidad,primaria,https://riisp.insp.mx/nada/files_nesstar/SINAC_Nacimientos/base/Base_Sinac_2008_2023.zip,,,no,pendiente
+3,"Natalidad y crecimiento poblacional de los municipios de Yucatán",3.natalidad,secundaria,https://www.geoboundaries.org/api/current/gbOpen/MEX/ADM2/,,,no,pendiente
 3,"Municipios con mayor concentración de población joven",3.poblacion_joven,,,,,,pendiente
 3,"Expansión urbana en Mérida",3.expansion_merida,,,,,,pendiente
 3,"Comparativa de población alfabetizada en los municipios de Yucatán",3.alfabetizacion,,,,,,pendiente
