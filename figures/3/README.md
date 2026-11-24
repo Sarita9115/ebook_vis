@@ -3,14 +3,13 @@
 Desde la raíz del repositorio, con las dependencias del proyecto instaladas:
 
 ```sh
-.venv/bin/python figures/3/natalidad/figura.py --vista pulso
-.venv/bin/python figures/3/natalidad/figura.py --vista calendario
+.venv/bin/python figures/3/natalidad/figura.py
 .venv/bin/python figures/3/alfabetizacion/figura.py
 ```
 
-Cada comando abre una vista en el navegador. Sin `--vista`, natalidad abre
-el mapa anual y el calendario en la misma página. Con `--sin-abrir`, los
-comandos imprimen la dirección del HTML generado.
+El primer comando abre **El pulso de Yucatán** y el segundo, **La biblioteca de Yucatán**.
+Para ver las dos en una página, ejecuta `.venv/bin/python figures/3/vista_previa.py`.
+Con `--sin-abrir`, los comandos imprimen la dirección del HTML generado.
 
 Las vistas locales leen las tablas preparadas en `figures/3/datos_locales/`.
 Git ignora esa carpeta. El visor de producción sigue llamando a `figura(datos)`.
