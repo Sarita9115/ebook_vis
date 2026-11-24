@@ -1,0 +1,480 @@
+/* Equipo 6 · Dinámica empresarial: escenas "estilo ciudad".
+   Dash carga todo app/assets en todas las páginas, así que cada regla vive
+   bajo el prefijo .e6 para no tocar las páginas de otros equipos. */
+
+.e6 {
+  --e6-caliza-clara: #EAE3D2;
+  --e6-caliza: #CBBF9F;
+  --e6-caliza-oscura: #9C8F6E;
+  --e6-papel: #F7F3EA;
+  --e6-monte: #2F5D3A;
+  --e6-monte-claro: #6E9A6B;
+  --e6-cenote: #1F7A80;
+  --e6-terracota: #C2562F;
+  --e6-tinta: #2B2A26;
+  --e6-tinta-suave: #6B6457;
+  --e6-rejilla: #ECE6D8;
+  --e6-lenta: cubic-bezier(.6, .05, .25, 1);
+
+  font-family: "Open Sans", Verdana, Arial, sans-serif;
+  color: var(--e6-tinta);
+  background: var(--e6-papel);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+.e6 *, .e6 *::before, .e6 *::after { box-sizing: inherit; }
+
+/* Solo en las páginas que contienen una escena del Equipo 6 */
+body:has(.e6) { margin: 0; background: #F7F3EA; }
+
+.e6-pagina {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: clamp(16px, 3vw, 40px) clamp(16px, 3vw, 32px) 48px;
+}
+
+/* Encabezado ------------------------------------------------------------ */
+.e6-antetitulo {
+  margin: 0 0 6px;
+  font-size: 13px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--e6-cenote);
+  font-weight: 600;
+}
+.e6-titulo {
+  margin: 0 0 clamp(14px, 2vw, 24px);
+  font-size: clamp(21px, 2.6vw, 30px);
+  line-height: 1.18;
+  font-weight: 700;
+  max-width: 42ch;
+}
+
+/* Escena ilustrada ------------------------------------------------------- */
+.e6-escenario { position: relative; }
+
+.e6-escena {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1200 / 750;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--e6-caliza-clara);
+  box-shadow: 0 1px 0 rgba(43, 42, 38, .06), 0 18px 40px -24px rgba(43, 42, 38, .45);
+  isolation: isolate;
+}
+/* La escena cabe en la pantalla: el ancho se limita por la altura visible. */
+.e6-escena { max-width: calc((100svh - 200px) * 1.6); margin: 0 auto; }
+.e6-escena--700 { aspect-ratio: 1200 / 700; max-width: calc((100svh - 200px) * 1.714); }
+.e6-escena--600 { aspect-ratio: 1200 / 600; max-width: calc((100svh - 330px) * 2); }
+
+.e6-escena > img,
+.e6-objeto > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Ilustración en la que se hace clic (palacio, naves) */
+.e6-objeto {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.e6-objeto > img {
+  transition: transform .5s var(--e6-lenta), filter .5s ease;
+  transform-origin: 50% 70%;
+}
+.e6-objeto:hover > img,
+.e6-objeto:focus-visible > img {
+  transform: scale(1.025) translateY(-4px);
+  filter: saturate(1.12) brightness(1.02);
+}
+.e6-objeto:focus-visible { outline: 3px solid var(--e6-cenote); outline-offset: -3px; }
+
+/* Punto que invita a interactuar */
+.e6-pulso {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: var(--e6-terracota);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, .85);
+  pointer-events: none;
+  z-index: 3;
+}
+.e6-pulso::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 3px solid var(--e6-terracota);
+  animation: e6-ping 1.8s ease-out infinite;
+}
+@keyframes e6-ping {
+  0% { transform: scale(.6); opacity: .9; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* Rótulo tipo cartel, como en los bocetos */
+.e6-cartel {
+  position: absolute;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border: 2.5px solid var(--e6-tinta);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .94);
+  color: var(--e6-tinta);
+  font: 700 clamp(13px, 1.5vw, 17px)/1.2 "Open Sans", Verdana, Arial, sans-serif;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 rgba(43, 42, 38, .18);
+  transition: transform .25s ease, box-shadow .25s ease, background .25s ease;
+}
+.e6-cartel::after { content: "→"; font-size: 1.15em; transition: transform .25s ease; }
+.e6-cartel:hover, .e6-cartel:focus-visible {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(43, 42, 38, .22);
+  background: #FFFFFF;
+}
+.e6-cartel:hover::after { transform: translateX(4px); }
+.e6-cartel:focus-visible { outline: 3px solid var(--e6-cenote); outline-offset: 3px; }
+
+.e6-pista {
+  position: absolute;
+  z-index: 4;
+  margin: 0;
+  max-width: 34ch;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .88);
+  font-size: clamp(12px, 1.35vw, 15px);
+  line-height: 1.35;
+  color: var(--e6-tinta);
+  pointer-events: none;
+}
+
+/* Puertas que se abren (relieve y huella) ------------------------------- */
+.e6-portal {
+  position: absolute;
+  z-index: 2;
+  perspective: 900px;
+  perspective-origin: 50% 40%;
+}
+.e6-luz {
+  position: absolute;
+  inset: 4% 2% 0;
+  border-radius: 50% 50% 0 0 / 30% 30% 0 0;
+  background: radial-gradient(ellipse at 50% 70%, #FFF6DD 0%, #F3E2BC 35%, rgba(243, 226, 188, 0) 72%);
+  opacity: 0;
+  transform: scale(.7);
+  transition: opacity .4s ease, transform .4s ease;
+  pointer-events: none;
+}
+.e6-hoja {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  transition: transform 1.15s var(--e6-lenta) .35s;
+  backface-visibility: visible;
+  will-change: transform;
+}
+.e6-hoja img { width: 100%; height: 100%; display: block; }
+.e6-hoja--izq { left: 0; transform-origin: 0 50%; }
+.e6-hoja--der { left: 50%; transform-origin: 100% 50%; }
+
+.e6-abierto .e6-hoja { transition-delay: 0s; }
+.e6-abierto .e6-hoja--izq { transform: rotateY(-108deg); }
+.e6-abierto .e6-hoja--der { transform: rotateY(108deg); }
+.e6-abierto .e6-luz {
+  opacity: 1;
+  transform: scale(1.25);
+  transition: opacity .7s ease .35s, transform 1.4s var(--e6-lenta) .35s;
+}
+
+/* El resto de la escena se atenúa cuando la entrada se abre */
+.e6-escena .e6-fondo { transition: filter .9s ease; }
+.e6-abierto .e6-escena .e6-fondo { filter: saturate(.85) brightness(.93); }
+
+/* Panel que se despliega con la figura --------------------------------- */
+.e6-revelado {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(26px) scale(.98);
+  transform-origin: 50% 0;
+  transition: grid-template-rows .55s ease, opacity .3s ease, transform .45s ease;
+}
+.e6-revelado > .e6-revelado-interior { overflow: hidden; min-height: 0; }
+.e6-abierto .e6-revelado,
+.e6-completo .e6-revelado {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: none;
+  transition: grid-template-rows .9s var(--e6-lenta) .75s, opacity .7s ease .95s, transform .9s var(--e6-lenta) .85s;
+}
+.e6-completo .e6-revelado { transition-delay: .1s, .25s, .2s; }
+
+.e6-tarjeta {
+  margin-top: 20px;
+  background: #FFFFFF;
+  border: 1px solid var(--e6-rejilla);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px -26px rgba(43, 42, 38, .5);
+  overflow: hidden;
+}
+.e6-tarjeta-barra,
+.e6-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px 8px 16px;
+  border-bottom: 2px solid var(--e6-tinta);
+  background: var(--e6-papel);
+}
+.e6-barra-titulo {
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.e6-cerrar {
+  appearance: none;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--e6-tinta);
+  border-radius: 6px;
+  background: #FFFFFF;
+  color: var(--e6-tinta);
+  font: 700 22px/1 "Open Sans", Verdana, Arial, sans-serif;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+.e6-cerrar:hover, .e6-cerrar:focus-visible { background: var(--e6-tinta); color: #FFFFFF; outline: none; }
+
+.e6-grafica-marco {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px;
+}
+
+/* Ventana emergente (gasto, corredor) ----------------------------------- */
+.e6-ventana {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  visibility: hidden;
+  pointer-events: none;
+  transition: visibility 0s linear .4s;
+}
+.e6-ventana.e6-abierta {
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+/* Plotly pone pointer-events: all en sus capas SVG, y en SVG "all" recibe
+   clics aunque el elemento esté oculto con visibility: hidden. Firefox lo
+   respeta: la gráfica invisible se quedaba con el clic del palacio y de las
+   naves. Todo lo que está cerrado deja pasar el clic. */
+.e6-ventana:not(.e6-abierta),
+.e6-ventana:not(.e6-abierta) *,
+.e6-escenario:not(.e6-abierto):not(.e6-completo) .e6-revelado,
+.e6-escenario:not(.e6-abierto):not(.e6-completo) .e6-revelado * {
+  pointer-events: none !important;
+}
+.e6-velo {
+  position: absolute;
+  inset: 0;
+  background: rgba(43, 42, 38, .55);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity .35s ease;
+}
+.e6-abierta .e6-velo { opacity: 1; }
+.e6-dialogo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(1260px, 94vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border: 2px solid var(--e6-tinta);
+  border-radius: 12px;
+  box-shadow: 10px 10px 0 rgba(43, 42, 38, .25);
+  opacity: 0;
+  transform: translate(-50%, -46%) scale(.94);
+  transition: opacity .35s ease, transform .45s var(--e6-lenta);
+}
+.e6-abierta .e6-dialogo { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.e6-dialogo-cuerpo { overflow: auto; }
+body.e6-sin-scroll { overflow: hidden; }
+
+/* Transición monte → ciudad -------------------------------------------- */
+.e6-transicion { --avance: 0; }
+.e6-capa-ciudad {
+  -webkit-mask-image: linear-gradient(to top, #000 calc(var(--avance) * 118% - 18%), transparent calc(var(--avance) * 118%));
+          mask-image: linear-gradient(to top, #000 calc(var(--avance) * 118% - 18%), transparent calc(var(--avance) * 118%));
+}
+.e6-capa-monte { filter: saturate(calc(1 - var(--avance) * .35)); }
+.e6-frente {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  bottom: calc(var(--avance) * 100%);
+  background: repeating-linear-gradient(90deg, var(--e6-terracota) 0 18px, transparent 18px 30px);
+  opacity: calc(min(var(--avance), 1 - var(--avance)) * 8);
+  z-index: 2;
+  pointer-events: none;
+}
+.e6-anio {
+  position: absolute;
+  z-index: 3;
+  top: 18%;
+  right: 3%;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .9);
+  font-weight: 700;
+  font-size: clamp(14px, 1.8vw, 20px);
+  pointer-events: none;
+}
+.e6-anio--antes { opacity: calc(1 - var(--avance) * 2); }
+.e6-anio--despues { opacity: calc(var(--avance) * 2 - 1); }
+
+.e6-control {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px 20px;
+  margin-top: 16px;
+  padding: 14px 18px 6px;
+  background: #FFFFFF;
+  border: 1px solid var(--e6-rejilla);
+  border-radius: 12px;
+}
+.e6-control-texto { margin: 0; font-size: 14px; color: var(--e6-tinta-suave); grid-column: 1 / -1; }
+.e6-deslizador {
+  min-width: 0;
+  padding: 0 34px 6px 28px;  /* deja aire a las etiquetas de los extremos */
+  --Dash-Fill-Interactive-Strong: var(--e6-terracota);
+  --Dash-Fill-Interactive-Weak: var(--e6-caliza-clara);
+}
+.e6-boton {
+  appearance: none;
+  border: 2px solid var(--e6-monte);
+  border-radius: 8px;
+  padding: 9px 16px;
+  background: var(--e6-monte);
+  color: #FFFFFF;
+  font: 700 14px/1.2 "Open Sans", Verdana, Arial, sans-serif;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+  white-space: nowrap;
+}
+.e6-boton:hover, .e6-boton:focus-visible { background: #FFFFFF; color: var(--e6-monte); outline: none; }
+
+/* Ficha de la plantilla y navegación ---------------------------------- */
+.e6-ficha {
+  margin-top: 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 18px 36px;
+  padding-top: 20px;
+  border-top: 2px solid var(--e6-tinta);
+}
+.e6-lectura { margin: 0; font-size: clamp(16px, 1.8vw, 19px); line-height: 1.5; }
+.e6-fuentes {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 14px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+.e6-fuentes dt { color: var(--e6-tinta-suave); font-weight: 600; }
+.e6-fuentes dd { margin: 0; }
+
+.e6-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 36px;
+  font-size: 14px;
+}
+.e6-nav-enlace { color: var(--e6-cenote); font-weight: 600; text-decoration: none; }
+.e6-nav-enlace:hover { text-decoration: underline; }
+
+/* Pantallas angostas -------------------------------------------------- */
+@media (max-width: 760px) {
+  .e6-escena { border-radius: 10px; }
+  /* El cartel y la pista se quedan dentro de la ilustración, abajo y al centro. */
+  .e6-cartel {
+    left: 50% !important;
+    right: auto !important;
+    bottom: 4% !important;
+    top: auto !important;
+    transform: translateX(-50%);
+    padding: 7px 11px;
+    font-size: 12px;
+    white-space: nowrap;
+    box-shadow: 3px 3px 0 rgba(43, 42, 38, .18);
+  }
+  .e6-cartel:hover, .e6-cartel:focus-visible { transform: translate(-50%, -2px); }
+  .e6-pista {
+    left: 3% !important;
+    right: 3% !important;
+    top: auto !important;
+    bottom: 3% !important;
+    max-width: none;
+    padding: 5px 8px;
+    font-size: 11px;
+    text-align: center;
+  }
+  .e6-pulso { width: 16px; height: 16px; margin: -8px 0 0 -8px; }
+  .e6-ficha { grid-template-columns: 1fr; }
+  .e6-fuentes { grid-template-columns: 1fr; gap: 2px; }
+  .e6-fuentes dd { margin-bottom: 8px; }
+  .e6-control { grid-template-columns: 1fr; }
+  .e6-dialogo {
+    width: 100vw;
+    max-height: none;
+    height: 100dvh;
+    border-radius: 0;
+    border: 0;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .e6 *, .e6 *::before, .e6 *::after, .e6-ventana, .e6-ventana * {
+    animation: none !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0s !important;
+  }
+}

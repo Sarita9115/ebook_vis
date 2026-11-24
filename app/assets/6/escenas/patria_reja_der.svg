@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 220" preserveAspectRatio="xMidYMid meet" role="img">
+<style>
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<defs><clipPath id="c"><path d="M80 220 V70 A80 70 0 0 0 0 0 V220 Z"/></clipPath></defs>
+<path d="M80 220 V70 A80 70 0 0 0 0 0 V220 Z" fill="rgba(23,79,84,.15)"/>
+<g clip-path="url(#c)" stroke="#2B2A26" stroke-width="3.2" stroke-linecap="round"><line x1="10" y1="12" x2="10" y2="214" /><line x1="21" y1="12" x2="21" y2="214" /><line x1="32" y1="12" x2="32" y2="214" /><line x1="43" y1="40" x2="43" y2="214" /><line x1="54" y1="40" x2="54" y2="214" /><line x1="65" y1="40" x2="65" y2="214" /><line x1="76" y1="40" x2="76" y2="214" />
+  <line x1="0" y1="96" x2="80" y2="96"/><line x1="0" y1="186" x2="80" y2="186"/>
+  <g stroke="#C2562F" stroke-width="2.4"><circle cx="22" cy="110" r="6" fill="none"/><circle cx="22" cy="160" r="6" fill="none"/><circle cx="44" cy="110" r="6" fill="none"/><circle cx="44" cy="160" r="6" fill="none"/><circle cx="66" cy="110" r="6" fill="none"/><circle cx="66" cy="160" r="6" fill="none"/></g>
+</g>
+<path d="M80 220 V70 A80 70 0 0 0 0 0 V220 Z" fill="none" stroke="#2B2A26" stroke-width="6"/>
+<circle cx="8" cy="140" r="4" fill="#C2562F"/>
+</svg>
