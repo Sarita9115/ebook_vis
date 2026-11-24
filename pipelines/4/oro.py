@@ -1,10 +1,14 @@
 """Equipo 4 · Inversión extranjera en Yucatán: del bronce a las tablas de oro.
 
-Mientras no existan MinIO y PostgreSQL con datos, el bronce es la carpeta `datos/4/` (fuera de Git) y el oro
-se escribe en `datos/4/oro/{viz_id}.csv`. Cada función devuelve la tabla de oro como DataFrame, con las
-columnas de metadatos que pide la arquitectura (viz_id, fuentes, institución, fecha, responsable).
+El oro vive en PostgreSQL (servicio `postgres` del docker-compose), esquema `oro`, una tabla por visualización:
+oro."4.ied_por_pais", oro."4.censos_economicos", etc. Cada tabla lleva las columnas de metadatos que pide la
+arquitectura (viz_id, fuentes, institución, fecha, responsable). La conexión sale del `.env` de la raíz o de
+`DATABASE_URL`.
 
-Uso:  python pipelines/4/oro.py        # reconstruye las cuatro tablas
+Mientras MinIO no tenga los archivos, el bronce es la carpeta `datos/4/` (fuera de Git).
+
+Uso:  docker compose up -d postgres
+      python pipelines/4/oro.py        # reconstruye y publica todas las tablas de oro
 """
 from __future__ import annotations
 
@@ -12,13 +16,16 @@ import os
 import urllib.request
 import zipfile
 from datetime import date, datetime
+from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
+from sqlalchemy import URL, Engine, create_engine, inspect
 
 RAIZ = Path(__file__).resolve().parents[2]
 BRONCE = Path(os.environ.get("EQUIPO4_DATOS", RAIZ / "datos" / "4"))
-ORO = BRONCE / "oro"
+ESQUEMA = "oro"
+CONTEXTO = "4.turismo_contexto"  # tabla auxiliar: cifras de llegadas que cita el texto de la historia
 
 # ---------------------------------------------------------------- metadatos de cada visualización
 META = {
@@ -219,20 +226,54 @@ CONSTRUCTORES = {
 }
 
 
-def construir(viz_id: str) -> pd.DataFrame:
-    """Reconstruye por completo la tabla de oro de una visualización (idempotente) y la escribe en ORO."""
-    df = CONSTRUCTORES[viz_id]()
-    ORO.mkdir(parents=True, exist_ok=True)
-    df.to_csv(ORO / f"{viz_id}.csv", index=False)
-    return df
+CONSTRUCTORES = {**CONSTRUCTORES, CONTEXTO: contexto_turismo}
+
+
+# ---------------------------------------------------------------- conexión a PostgreSQL (esquema oro)
+def _env() -> dict:
+    """Variables de entorno, completadas con el `.env` de la raíz (el mismo que usa docker compose)."""
+    valores = {}
+    ruta = RAIZ / ".env"
+    if ruta.exists():
+        for linea in ruta.read_text().splitlines():
+            linea = linea.strip()
+            if linea and not linea.startswith("#") and "=" in linea:
+                k, v = linea.split("=", 1)
+                valores[k.strip()] = v.strip().strip("'\"")
+    return {**valores, **os.environ}
+
+
+@lru_cache(maxsize=None)
+def motor() -> Engine:
+    """Motor de SQLAlchemy hacia el PostgreSQL del docker compose. `DATABASE_URL` tiene prioridad."""
+    e = _env()
+    url = e.get("DATABASE_URL") or URL.create(
+        "postgresql+psycopg2", username=e.get("POSTGRES_USER"), password=e.get("POSTGRES_PASSWORD"),
+        host=e.get("POSTGRES_HOST", "localhost"), port=int(e.get("POSTGRES_PORT", 5432)),
+        database=e.get("POSTGRES_DB"))
+    return create_engine(url, pool_pre_ping=True)
+
+
+def construir(*viz_ids: str) -> dict[str, pd.DataFrame]:
+    """Reconstruye las tablas de oro pedidas (todas si no se indica ninguna) y las publica en el esquema oro.
+
+    Primero se calculan todas en memoria; después se escriben en una sola transacción: o se confirman todas
+    o PostgreSQL no queda con cambios parciales. Es idempotente: cada ejecución reemplaza las tablas.
+    """
+    tablas = {v: CONSTRUCTORES[v]() for v in (viz_ids or CONSTRUCTORES)}
+    with motor().begin() as con:
+        for v, df in tablas.items():
+            df.to_sql(v, con, schema=ESQUEMA, if_exists="replace", index=False)
+    return tablas
 
 
 def leer(viz_id: str) -> pd.DataFrame:
-    """Lee la tabla de oro vigente; si no existe todavía, la construye."""
-    ruta = ORO / f"{viz_id}.csv"
-    return pd.read_csv(ruta) if ruta.exists() else construir(viz_id)
+    """Lee la tabla de oro vigente desde PostgreSQL; si no existe todavía, la construye y la publica."""
+    if not inspect(motor()).has_table(viz_id, schema=ESQUEMA):
+        return construir(viz_id)[viz_id]
+    return pd.read_sql_table(viz_id, motor(), schema=ESQUEMA)
 
 
 if __name__ == "__main__":
-    for v in CONSTRUCTORES:
-        print(f"{v:24} {len(construir(v)):5} filas  ({date.today()})")
+    for v, df in construir().items():
+        print(f"{ESQUEMA}.\"{v}\"{'':{26 - len(v)}} {len(df):5} filas  ({date.today()})")

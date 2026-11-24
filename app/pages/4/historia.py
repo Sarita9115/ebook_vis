@@ -77,7 +77,7 @@ def cifras() -> dict:
     s = {k: g.set_index("periodo").valor for k, g in t.groupby("serie")}
     for v in s.values():
         v.index = v.index.astype(str)
-    ctx = oro.contexto_turismo()
+    ctx = oro.leer(oro.CONTEXTO)
     ctx = ctx[(ctx.tabla == "llegada_centros") & (ctx.periodo == "ene-nov")]
     ext = {c: g.set_index("indicador").valor for c, g in ctx.groupby("dimension")}
 
