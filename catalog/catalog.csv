@@ -9,15 +9,22 @@ equipo,subtema,viz_id,papel,enlace,valor_referencia,tolerancia,streaming,estado
 1,"Participación estudiantil y comunidad",1.participacion_estudiantil,,,,,,pendiente
 2,"Dónde se cuida la península",2.donde_se_cuida,,,,,,pendiente
 2,"Yucatán, al lado de sus reservas",2.yucatan_reservas,,,,,,pendiente
-2,"Herbario CICY, plantas vasculares",2.herbario_cicy,,,,,,pendiente
+2,"Herbario CICY, plantas vasculares",2.herbario_cicy,primaria,http://datos.cicy.mx/?q=node/70/dataset/download,15067,0,no,borrador
+2,"Herbario CICY, plantas vasculares",2.herbario_cicy,secundaria,https://www.dof.gob.mx/nota_detalle.php?codigo=5173091&fecha=30/12/2010,,,no,borrador
+2,"Herbario CICY, plantas vasculares",2.herbario_cicy,secundaria,https://www.inegi.org.mx/programas/ca/2022/#tabulados,,,no,borrador
+2,"Herbario CICY, plantas vasculares",2.herbario_cicy,secundaria,https://www.inegi.org.mx/servicios/api_denue.html,,,no,borrador
 2,"La fauna de la península, en tu espacio",2.fauna_nom059,,,,,,pendiente
-2,"Unidades económicas de impacto ambiental o relación con la biodiversidad",2.unidades_en_reservas,,,,,,pendiente
-2,"Impacto por municipio ocasionado por la cría de cerdo en la península",2.cria_de_cerdo,,,,,,pendiente
-2,"Cada tipo de negocio situado en cada reserva natural",2.negocios_en_reservas,,,,,,pendiente
+2,"Unidades económicas de impacto ambiental o relación con la biodiversidad",2.unidades_en_reservas,primaria,http://sig.conanp.gob.mx/website/pagsig/info_shape.htm,1456,0.01,no,borrador
+2,"Unidades económicas de impacto ambiental o relación con la biodiversidad",2.unidades_en_reservas,secundaria,https://www.inegi.org.mx/servicios/api_denue.html,,,no,borrador
+2,"Impacto por municipio ocasionado por la cría de cerdo en la península",2.cria_de_cerdo,primaria,https://www.inegi.org.mx/programas/ca/2022/#tabulados,1696764,0.001,no,borrador
+2,"Impacto por municipio ocasionado por la cría de cerdo en la península",2.cria_de_cerdo,secundaria,http://sig.conanp.gob.mx/website/pagsig/info_shape.htm,,,no,borrador
+2,"Cada tipo de negocio situado en cada reserva natural",2.negocios_en_reservas,primaria,https://www.inegi.org.mx/servicios/api_denue.html,4625,0.01,no,borrador
+2,"Cada tipo de negocio situado en cada reserva natural",2.negocios_en_reservas,secundaria,http://sig.conanp.gob.mx/website/pagsig/info_shape.htm,,,no,borrador
 2,"Los ecosistemas que protege la península",2.ecosistemas,,,,,,pendiente
 3,"Crecimiento poblacional y densidad territorial",3.crecimiento_densidad,,,,,,pendiente
 3,"Ranking porcentual del crecimiento poblacional de los estados de México",3.ranking_crecimiento,,,,,,pendiente
-3,"Natalidad y crecimiento poblacional de los municipios de Yucatán",3.natalidad,,,,,,pendiente
+3,"Natalidad y crecimiento poblacional de los municipios de Yucatán",3.natalidad,primaria,https://riisp.insp.mx/nada/files_nesstar/SINAC_Nacimientos/base/Base_Sinac_2008_2023.zip,,,no,pendiente
+3,"Natalidad y crecimiento poblacional de los municipios de Yucatán",3.natalidad,secundaria,https://www.geoboundaries.org/api/current/gbOpen/MEX/ADM2/,,,no,pendiente
 3,"Municipios con mayor concentración de población joven",3.poblacion_joven,,,,,,pendiente
 3,"Expansión urbana en Mérida",3.expansion_merida,,,,,,pendiente
 3,"Comparativa de población alfabetizada en los municipios de Yucatán",3.alfabetizacion,,,,,,pendiente
@@ -46,12 +53,21 @@ equipo,subtema,viz_id,papel,enlace,valor_referencia,tolerancia,streaming,estado
 5,"El entorno de la escuela",5.entorno_escuela,,,,,,pendiente
 5,"Las metas del estado",5.metas_estado,,,,,,pendiente
 5,"La geografía de la dispersión",5.geografia_dispersion,,,,,,pendiente
-6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,,,,,,pendiente
-6,"Aporte del sector empresarial al PIB estatal y regional",6.aporte_pib,,,,,,pendiente
-6,"Atracción de capital, empleo y evolución de las unidades económicas en Yucatán",6.atraccion_capital,,,,,,pendiente
-6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,,,,,,pendiente
-6,"Gasto público estatal y fomento económico: hacia dónde va el presupuesto de Yucatán",6.gasto_publico,,,,,,pendiente
-6,"Cambio de uso del suelo y expansión urbana en Yucatán y la zona metropolitana de Mérida",6.cambio_suelo,,,,,,pendiente
-6,"Concentración industrial en el corredor Mérida, Umán y Hunucmá",6.corredor_industrial,,,,,,pendiente
-6,"Relieve y altura edificada de la zona metropolitana de Mérida vistos desde modelos de elevación de 5 m",6.relieve_5m,,,,,,pendiente
-6,"Huella construida, altura y densidad empresarial de Mérida",6.huella_construida,,,,,,pendiente
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,primaria,https://www.inegi.org.mx/app/descarga/?ti=6,,,no,borrador
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_31.xlsx,,,no,borrador
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_04.xlsx,,,no,borrador
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_23.xlsx,,,no,borrador
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson,,,no,borrador
+6,"Aporte del sector empresarial al PIB estatal y regional",6.aporte_pib,primaria,https://www.inegi.org.mx/programas/pibent/2018/#tabulados,1164.315,0.001,no,borrador
+6,"Aporte del sector empresarial al PIB estatal y regional",6.aporte_pib,secundaria,https://www.inegi.org.mx/app/descarga/?ti=6,,,no,borrador
+6,"Atracción de capital, empleo y evolución de las unidades económicas en Yucatán",6.atraccion_capital,primaria,https://www.datos.gob.mx/dataset/inversion_extranjera_directa,,,no,borrador
+6,"Atracción de capital, empleo y evolución de las unidades económicas en Yucatán",6.atraccion_capital,secundaria,https://www.inegi.org.mx/app/descarga/?ti=6,,,no,borrador
+6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,primaria,https://ssop.yucatan.gob.mx/mapaobras,,,no,borrador
+6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_31.xlsx,,,no,borrador
+6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,secundaria,https://www.inegi.org.mx/temas/mg/#Descargas,,,no,borrador
+6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,secundaria,https://www.inegi.org.mx/app/indicesdeprecios/Estructura.aspx?idEstructura=112001700030&T=%C3%8Dndices+de+Precios+al+Consumidor&ST=INPC+Nacional+%28mensual%29,,,no,borrador
+6,"Gasto público estatal y fomento económico: hacia dónde va el presupuesto de Yucatán",6.gasto_publico,primaria,https://www.yucatan.gob.mx/docs/transparencia/datos_abiertos/2025/Datos_abiertos_triemstre_4_2025.csv,7.78,0.05,no,pendiente
+6,"Cambio de uso del suelo y expansión urbana en Yucatán y la zona metropolitana de Mérida",6.cambio_suelo,primaria,http://www.conabio.gob.mx/informacion/gis/maps/geo/usv250s7gw.zip,75.95,1.0,no,pendiente
+6,"Concentración industrial en el corredor Mérida, Umán y Hunucmá",6.corredor_industrial,primaria,https://www.inegi.org.mx/contenidos/masiva/denue/denue_31_csv.zip,72.7,1.0,no,pendiente
+6,"Relieve y altura edificada de la zona metropolitana de Mérida vistos desde modelos de elevación de 5 m",6.relieve_5m,primaria,https://www.inegi.org.mx/app/geo2/elevacionesmex/,93.1,1.0,no,pendiente
+6,"Huella construida, altura y densidad empresarial de Mérida",6.huella_construida,primaria,https://docs.overturemaps.org/guides/buildings/,18.7,1.0,no,pendiente
