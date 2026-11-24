@@ -1,0 +1,247 @@
+/* Portada del recorrido: ilustración del Mayab, greca y tarjetas por capítulo. */
+
+.indice {
+  --monte: #2F5D3A;
+  --arcilla: #C2562F;
+  --cenote: #1F7A80;
+  --mar: #2A78D6;
+  --caliza: #9C8F6E;
+  --casa: #3B3A6B;
+  --papel-tarjeta: #FFFDF8;
+  --arena: #F3EBDA;
+  background: var(--arena);
+  padding-bottom: 96px;
+}
+
+/* Portada */
+
+.indice .portada-mayab {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 78vh;
+  padding: 0 max(32px, calc((100vw - 1120px) / 2)) 72px;
+  background:
+    linear-gradient(180deg, rgba(20, 16, 10, 0) 30%, rgba(20, 16, 10, 0.55) 68%, rgba(20, 16, 10, 0.82) 100%),
+    url("/assets/indice/portada.jpg") center 40% / cover no-repeat;
+  color: #FFFFFF;
+}
+
+.indice .portada-texto { max-width: 640px; }
+
+.indice .portada-mayab .kicker {
+  color: #F6D77A;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.indice .portada-mayab h1 {
+  font-family: var(--serif, Georgia, serif);
+  font-size: clamp(44px, 7.5vw, 92px);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 10px 0 18px;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
+}
+
+.indice .bajada {
+  font-size: clamp(18px, 2.2vw, 22px);
+  line-height: 1.45;
+  margin: 0 0 28px;
+  max-width: 34ch;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+}
+
+.indice .boton {
+  display: inline-block;
+  padding: 13px 24px;
+  border-radius: 999px;
+  background: #F6D77A;
+  color: #2A1F0E;
+  font-weight: 700;
+  text-decoration: none;
+}
+.indice .boton:hover { background: #FFFFFF; }
+.indice .boton:focus-visible { outline: 3px solid #FFFFFF; outline-offset: 3px; }
+
+/* Greca escalonada entre dos franjas con los seis colores de tema */
+
+.indice .greca {
+  --seis: linear-gradient(90deg,
+    var(--monte) 0 16.66%,
+    var(--arcilla) 16.66% 33.33%,
+    var(--cenote) 33.33% 50%,
+    var(--mar) 50% 66.66%,
+    var(--caliza) 66.66% 83.33%,
+    var(--casa) 83.33% 100%);
+  --escalon: var(--casa);
+  height: 32px;
+  background:
+    var(--seis) top / 100% 6px no-repeat,
+    var(--seis) bottom / 100% 6px no-repeat,
+    linear-gradient(90deg, transparent 12px, var(--escalon) 12px 20px, transparent 20px) 0 6px / 32px 5px repeat-x,
+    linear-gradient(90deg, transparent 8px, var(--escalon) 8px 24px, transparent 24px) 0 11px / 32px 5px repeat-x,
+    linear-gradient(90deg, transparent 4px, var(--escalon) 4px 28px, transparent 28px) 0 16px / 32px 5px repeat-x,
+    linear-gradient(90deg, var(--escalon), var(--escalon)) 0 21px / 32px 5px repeat-x,
+    #E6D7B4;
+}
+
+/* Rejilla de tarjetas */
+
+.indice .rejilla {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 64px 32px 0;
+  scroll-margin-top: 0;
+}
+
+.indice .tarjeta {
+  --acento: var(--monte);
+  --tinta-tema: var(--monte);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--papel-tarjeta);
+  border-top: 6px solid var(--acento);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(60, 40, 10, 0.08);
+  overflow: hidden;
+}
+.indice .tarjeta[data-tema="1"] { --acento: var(--monte); --tinta-tema: var(--monte); }
+.indice .tarjeta[data-tema="2"] { --acento: var(--arcilla); --tinta-tema: #B84C28; }
+.indice .tarjeta[data-tema="3"] { --acento: var(--cenote); --tinta-tema: var(--cenote); }
+.indice .tarjeta[data-tema="4"] { --acento: var(--mar); --tinta-tema: #246EC8; }
+.indice .tarjeta[data-tema="5"] { --acento: var(--caliza); --tinta-tema: #7A6E52; }
+.indice .tarjeta[data-tema="6"] { --acento: var(--casa); --tinta-tema: var(--casa); }
+
+.indice .tarjeta-imagen {
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: #E6D7B4;
+}
+.indice .tarjeta-imagen img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.indice .tarjeta .numeral {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: -34px 0 0 24px;
+  border: 4px solid var(--papel-tarjeta);
+  border-radius: 50%;
+  background: var(--tinta-tema);
+  color: #FFFFFF;
+  font-family: var(--serif, Georgia, serif);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+
+.indice .tarjeta-texto { padding: 12px 28px 26px; }
+
+.indice .tarjeta .kicker { color: var(--tinta-tema); }
+
+.indice .tarjeta h2 {
+  font-family: var(--serif, Georgia, serif);
+  font-size: clamp(24px, 2.6vw, 30px);
+  line-height: 1.12;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 6px 0 8px;
+}
+
+.indice .pregunta {
+  margin: 0;
+  color: var(--tinta-2, #52514E);
+}
+
+.indice .tarjeta ol {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  counter-reset: subtema;
+  font-size: 16px;
+}
+.indice .tarjeta li {
+  counter-increment: subtema;
+  position: relative;
+  margin: 0;
+  padding: 7px 0 7px 2em;
+  border-top: 1px solid var(--rejilla, #E8E6E1);
+}
+.indice .tarjeta li::before {
+  content: counter(subtema);
+  position: absolute;
+  left: 0;
+  top: 8px;
+  color: var(--tinta-tema);
+  font-weight: 700;
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+
+.indice .tarjeta a {
+  color: var(--tinta, #1A1A19);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.indice .tarjeta a:hover { color: var(--tinta-tema); }
+.indice .tarjeta a:focus-visible {
+  outline: 2px solid var(--acento);
+  outline-offset: 3px;
+}
+
+.indice a.historia {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--tinta-tema);
+  font-weight: 700;
+}
+
+.indice .cierre {
+  max-width: 1120px;
+  margin: 64px auto 0;
+  padding: 0 32px;
+  text-align: center;
+  font-family: var(--serif, Georgia, serif);
+  font-size: clamp(20px, 2.4vw, 26px);
+  font-style: italic;
+  color: var(--casa);
+}
+
+/* Movimiento medio */
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+  .indice .tarjeta {
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+  }
+  .indice .tarjeta-imagen img { transition: transform 0.6s ease; }
+  .indice .tarjeta:hover,
+  .indice .tarjeta:focus-within {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 30px rgba(60, 40, 10, 0.16);
+  }
+  .indice .tarjeta:hover .tarjeta-imagen img,
+  .indice .tarjeta:focus-within .tarjeta-imagen img { transform: scale(1.05); }
+  .indice .boton { transition: background 0.2s ease; }
+}
+
+@media (max-width: 760px) {
+  .indice .rejilla { grid-template-columns: 1fr; gap: 24px; padding: 40px 16px 0; }
+  .indice .portada-mayab { min-height: 70vh; padding: 0 20px 48px; }
+  .indice .tarjeta-texto { padding: 10px 18px 20px; }
+  .indice .tarjeta .numeral { width: 56px; height: 56px; font-size: 26px; margin: -30px 0 0 18px; }
+  .indice .cierre { padding: 0 20px; }
+}
