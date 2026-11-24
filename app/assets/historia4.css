@@ -1,0 +1,112 @@
+/* Historia del equipo 4: diseño editorial de revista de divulgación. */
+:root {
+  --papel: #FBFAF7;
+  --tinta: #1A1A19;
+  --tinta-2: #52514E;
+  --tinta-3: #8A8880;
+  --rejilla: #E8E6E1;
+  --azul: #2A78D6;
+  --agua: #1BAF7A;
+  --naranja: #EB6834;
+  --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans: "Source Sans 3", Inter, "Helvetica Neue", Arial, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--papel); color: var(--tinta); font-family: var(--sans); font-size: 18px;
+       line-height: 1.6; -webkit-font-smoothing: antialiased; }
+.historia { max-width: 1280px; margin: 0 auto; padding: 0 32px 80px; }
+
+/* Portada */
+.portada { min-height: 88vh; display: flex; flex-direction: column; justify-content: center; max-width: 860px;
+           border-bottom: 1px solid var(--rejilla); }
+.portada h1 { font-family: var(--serif); font-size: clamp(44px, 7vw, 84px); line-height: 1.02; font-weight: 700;
+              letter-spacing: -0.02em; margin: 12px 0 24px; }
+.kicker { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--azul); }
+.dek { font-family: var(--serif); font-size: 22px; line-height: 1.5; color: var(--tinta-2); max-width: 760px; margin: 0; }
+.firma { margin-top: 28px; font-size: 14px; color: var(--tinta-3); }
+.desliza { margin-top: 56px; font-size: 14px; color: var(--tinta-3); animation: flota 2.2s ease-in-out infinite; }
+@keyframes flota { 50% { transform: translateY(6px); } }
+
+/* Secciones */
+.seccion { padding: 96px 0 24px; border-bottom: 1px solid var(--rejilla); }
+.seccion-cabeza { max-width: 820px; margin-bottom: 36px; }
+.seccion h2 { font-family: var(--serif); font-size: clamp(32px, 4.4vw, 52px); line-height: 1.08; font-weight: 700;
+              letter-spacing: -0.015em; margin: 10px 0 18px; }
+
+/* Controles del mapa: una sola fila sobre la figura */
+.controles { display: flex; gap: 48px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 8px; }
+.control { min-width: 280px; }
+.control:first-child { flex: 1; max-width: 560px; }
+.control label { display: block; font-size: 13px; font-weight: 600; color: var(--tinta-2); margin-bottom: 6px; }
+.radio label { display: inline-flex; align-items: center; gap: 6px; margin-right: 20px; font-size: 16px;
+               color: var(--tinta); cursor: pointer; }
+.figura-ancha { background: var(--papel); border: 1px solid var(--rejilla); border-radius: 10px; overflow: hidden; }
+
+/* Cifras destacadas */
+.cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 32px; margin: 40px 0; }
+.cifra { border-top: 2px solid var(--tinta); padding-top: 14px; }
+.cifra-valor { font-family: var(--serif); font-size: 46px; font-weight: 700; line-height: 1.05; color: var(--tinta); }
+.cifra-texto { font-size: 16px; color: var(--tinta-2); margin-top: 8px; }
+
+/* Lectura guiada: texto a la izquierda, figura fija a la derecha */
+.scrolly { display: grid; grid-template-columns: minmax(260px, 34%) 1fr; gap: 40px; position: relative; }
+.pasos { padding: 18vh 0 30vh; }
+.paso { margin-bottom: 62vh; padding: 22px 24px; background: white; border: 1px solid var(--rejilla);
+        border-radius: 10px; opacity: 0.4; transition: opacity 0.35s ease, box-shadow 0.35s ease; }
+.paso:last-child { margin-bottom: 0; }
+.paso.activo { opacity: 1; box-shadow: 0 6px 24px rgba(26, 26, 25, 0.08); }
+.paso h3 { font-family: var(--serif); font-size: 26px; line-height: 1.2; margin: 6px 0 10px; }
+.paso p { margin: 0; color: var(--tinta-2); }
+.paso-num { font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tinta-3); }
+.grafica { position: sticky; top: 4vh; height: 92vh; display: flex; align-items: center; }
+.grafica > div { width: 100%; }
+.nota-metodo { margin-top: 14px; padding: 12px 14px; background: var(--papel); border-left: 3px solid var(--naranja);
+               font-size: 15px; color: var(--tinta-2); }
+
+/* Fuentes al pie de cada figura */
+.fuente { font-size: 13px; line-height: 1.55; color: var(--tinta-3); margin: 14px 0 0; max-width: 980px; }
+.fuente-et { font-weight: 700; color: var(--tinta-2); }
+.fuente code { font-size: 12px; background: var(--rejilla); padding: 1px 5px; border-radius: 4px; }
+
+/* Cierre */
+.cierre { max-width: 760px; padding: 96px 0 0; }
+.cierre h2 { font-family: var(--serif); font-size: 40px; margin: 0 0 16px; }
+.cierre p { font-family: var(--serif); font-size: 21px; color: var(--tinta-2); }
+.cierre .pie { font-family: var(--sans); font-size: 14px; color: var(--tinta-3); }
+
+/* Revelado al hacer scroll */
+.revelar { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.revelar.visible { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .revelar { opacity: 1; transform: none; transition: none; }
+  .desliza { animation: none; }
+}
+
+/* Pantallas angostas: la figura sigue fija arriba y el texto pasa por encima */
+@media (max-width: 900px) {
+  .historia { padding: 0 18px 60px; }
+  .scrolly { grid-template-columns: 1fr; }
+  .grafica { grid-row: 1; height: auto; top: 0; z-index: 1; background: var(--papel); }
+  .pasos { grid-row: 2; padding: 0; position: relative; z-index: 2; }
+  .paso { margin-bottom: 40vh; }
+}
+
+/* Barra inferior del mapa de flujos (como en el boceto) */
+.mapa-barra { display: flex; align-items: center; gap: 16px; padding: 12px 16px; border-top: 1px solid var(--rejilla);
+              background: white; font-size: 14px; color: var(--tinta-2); flex-wrap: wrap; }
+.mapa-boton, .mapa-select { font-family: var(--sans); font-size: 14px; color: var(--tinta); background: white;
+                            border: 1px solid #D6D3CC; border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+.mapa-boton:hover { background: var(--papel); }
+.mapa-ley { display: inline-flex; align-items: center; gap: 6px; }
+.mapa-ley i { display: inline-block; width: 22px; height: 10px; border-radius: 2px; }
+.ley-entra { background: #2F9E5B; }
+.ley-sale { background: #E34948; }
+.mapa-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+.chip { display: flex; flex-direction: column; align-items: center; padding: 4px 10px; line-height: 1.15;
+        font-family: var(--sans); font-size: 13px; border: 1px solid #E1E0D9; background: white; color: var(--tinta);
+        border-radius: 6px; cursor: pointer; }
+.chip:hover { border-color: var(--tinta-3); }
+.chip small { font-size: 11px; font-variant-numeric: tabular-nums; }
+.chip.activo { background: var(--tinta); color: white; border-color: var(--tinta); }
+.chip.activo small { color: white !important; }
