@@ -41,6 +41,15 @@ def _descargar(url: str) -> tuple[str, str]:
     return f.name, h.hexdigest()
 
 
+def _sha256_archivo(ruta: Path) -> str:
+    import hashlib
+    h = hashlib.sha256()
+    with open(ruta, "rb") as f:
+        while bloque := f.read(1 << 20):
+            h.update(bloque)
+    return h.hexdigest()
+
+
 def ingerir() -> dict[str, str]:
     cliente = comun.minio()
     if not cliente.bucket_exists(comun.BUCKET):
@@ -52,7 +61,15 @@ def ingerir() -> dict[str, str]:
             resultado[dataset] = f"ya en bronce (fecha={previa})"
             continue
         if not d["url"]:
-            faltan.append(f"- {dataset}: {d['manual']}")
+            local = Path(__file__).resolve().parent / "manual" / d["archivo"]   # archivo guardado en el repo
+            if local.exists():
+                hoy = date.today().isoformat()
+                sha = _sha256_archivo(local)
+                cliente.fput_object(comun.BUCKET, f"{comun.EQUIPO}/{dataset}/fecha={hoy}/{d['archivo']}", str(local),
+                                    metadata={"fecha-obtencion": hoy, "origen": f"repo: pipelines/5/manual/{d['archivo']}", "sha256": sha})
+                resultado[dataset] = f"tomado del repo (fecha={hoy})"
+                continue
+            faltan.append(f"- {dataset}: {d['manual']} (o guárdalo como pipelines/5/manual/{d['archivo']})")
             resultado[dataset] = "FALTA (subir a mano)"
             continue
         hoy = date.today().isoformat()
