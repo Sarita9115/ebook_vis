@@ -47,13 +47,36 @@ La tabla de oro es un GeoDataFrame en EPSG:4326, en formato largo con `capa`:
 - `resumen`: una fila con el % de edificios de menos de 5 m y los conteos.
 
 El ráster de 5 m nunca sale del pipeline: la tabla de oro solo trae la malla.
+
+Etapas (Airflow, dags/equipo_6.py):
+
+- `ingesta()`: el portal del MDE de INEGI no da un enlace directo por carta y
+  Overture se descarga por consulta, así que estos crudos llegan a
+  bronze/6/relieve_5m/ por la consola de MinIO o desde Drive:
+    1. si bronce ya tiene archivos del conjunto, se usan tal cual;
+    2. si no, se bajan con gdown del enlace de Drive en E6_GDRIVE_RELIEVE_5M
+       (carpeta, archivo o ID), o del `enlace` del catálogo si es de Drive.
+  El DENUE sí tiene enlace directo: si falta en bronce, se descarga del INEGI.
+- `plata()`:   convierte cada XYZ a COG en raster/6/relieve_5m/ (si rasterio/GDAL
+  están instalados), registra rutas y metadatos en plata."6.relieve_5m.raster"
+  y carga la malla de 200 m en plata."6.relieve_5m.malla" (EPSG:32616) con sus
+  cifras en plata."6.relieve_5m.cifras".
+- `oro()`:     arma oro."6.relieve_5m" desde plata.
+
+Prueba local (opcional y explícita): `ingesta(carpeta_local=...)` o la variable
+E6_CRUDOS_RELIEVE_5M suben una carpeta con las cartas XYZ, las huellas de
+Overture (.parquet) y, si se tiene, el ZIP del DENUE; `construir_oro(dir_cartas,
+ruta_edificios, ruta_denue)` arma el oro en memoria desde rutas dadas.
 """
 
 from __future__ import annotations
 
 import datetime as dt
+import importlib.util
 import io
+import logging
 import re
+import sys
 import zipfile
 from pathlib import Path
 
@@ -62,7 +85,24 @@ import numpy as np
 import pandas as pd
 import shapely
 
+
+def _cargar_almacen():
+    """Carga pipelines/6/_almacen.py por ruta (la carpeta "6" no es un paquete)."""
+    if "e6_almacen" not in sys.modules:
+        spec = importlib.util.spec_from_file_location("e6_almacen", Path(__file__).with_name("_almacen.py"))
+        modulo = importlib.util.module_from_spec(spec)
+        sys.modules["e6_almacen"] = modulo
+        spec.loader.exec_module(modulo)
+    return sys.modules["e6_almacen"]
+
+
+alm = _cargar_almacen()
+log = logging.getLogger("equipo6.relieve_5m")
+
 VIZ_ID = "6.relieve_5m"
+DATASET = "relieve_5m"
+TABLAS_PLATA = {"malla": f"{VIZ_ID}.malla", "cifras": f"{VIZ_ID}.cifras", "raster": f"{VIZ_ID}.raster"}
+NOMBRES_EDIFICIOS = ("edificios_merida.parquet", "buildings_merida.parquet", "*.parquet")
 CRS_TRABAJO = 32616
 CRS_PUBLICACION = 4326
 CVE_ENT_YUCATAN = "31"
@@ -359,11 +399,9 @@ def _poligonos(malla: pd.DataFrame) -> gpd.GeoSeries:
     return gpd.GeoSeries(cajas, crs=CRS_TRABAJO).to_crs(CRS_PUBLICACION)
 
 
-def construir_oro(dir_cartas: Path, ruta_edificios: Path, ruta_denue: Path,
-                  fecha_obtencion: str | None = None, verbose: bool = True) -> gpd.GeoDataFrame:
-    malla, cifras = construir_malla(dir_cartas, ruta_edificios, ruta_denue, verbose)
-
-    celdas = malla.copy()
+def oro_desde_malla(malla: pd.DataFrame, cifras: dict, fecha_obtencion: str) -> gpd.GeoDataFrame:
+    """Tabla de oro a partir de la malla de 200 m y sus cifras."""
+    celdas = pd.DataFrame(malla.drop(columns=["geometry", "fecha_obtencion"], errors="ignore")).copy()
     celdas["capa"] = "celda"
     for c in ("huella_m2", "huella_pct", "altura_m", "mdt_m", "cobertura"):
         celdas[c] = celdas[c].round(3)
@@ -385,9 +423,6 @@ def construir_oro(dir_cartas: Path, ruta_edificios: Path, ruta_denue: Path,
         oro[c] = oro[c].astype("Int64")
     oro["urbana"] = oro["urbana"].astype("boolean")
 
-    if fecha_obtencion is None:
-        primera = sorted(Path(dir_cartas).rglob("*_ms.xyz"))[0]
-        fecha_obtencion = dt.date.fromtimestamp(primera.stat().st_mtime).isoformat()
     oro.insert(0, "viz_id", VIZ_ID)
     oro["fuente_primaria"] = FUENTE_PRIMARIA
     oro["fuente_secundaria"] = FUENTE_SECUNDARIA
@@ -403,6 +438,182 @@ def construir_oro(dir_cartas: Path, ruta_edificios: Path, ruta_denue: Path,
     oro = oro[columnas]
     oro.attrs["cifras"] = cifras
     return oro
+
+
+def _fecha_cartas(dir_cartas: Path) -> str:
+    primera = sorted(Path(dir_cartas).rglob("*_ms.xyz"))[0]
+    return dt.date.fromtimestamp(primera.stat().st_mtime).isoformat()
+
+
+def construir_oro(dir_cartas: Path, ruta_edificios: Path, ruta_denue: Path,
+                  fecha_obtencion: str | None = None, verbose: bool = True) -> gpd.GeoDataFrame:
+    """Prueba local: crudos -> malla -> oro en memoria."""
+    malla, cifras = construir_malla(dir_cartas, ruta_edificios, ruta_denue, verbose)
+    return oro_desde_malla(malla, cifras, fecha_obtencion or _fecha_cartas(dir_cartas))
+
+
+# ---------------------------------------------------------------------------
+# Plata: malla, cifras y registro del ráster
+# ---------------------------------------------------------------------------
+
+def malla_a_plata(malla: pd.DataFrame, cifras: dict, fecha_obtencion: str) -> dict[str, pd.DataFrame]:
+    """Malla con polígonos en EPSG:32616 y cifras en una fila."""
+    medio = CELDA_M / 2
+    cajas = shapely.box(malla.x_utm - medio, malla.y_utm - medio, malla.x_utm + medio, malla.y_utm + medio)
+    tabla_malla = gpd.GeoDataFrame(malla.copy(), geometry=cajas, crs=CRS_TRABAJO)
+    tabla_malla["fecha_obtencion"] = fecha_obtencion
+    fila = {k: v for k, v in cifras.items() if k != "origen_utm"}
+    fila["origen_x_utm"], fila["origen_y_utm"] = cifras["origen_utm"]
+    fila["fecha_obtencion"] = fecha_obtencion
+    return {"malla": tabla_malla, "cifras": pd.DataFrame([fila])}
+
+
+def cifras_desde_plata(tabla: pd.DataFrame) -> dict:
+    fila = tabla.iloc[0].to_dict()
+    fila["origen_utm"] = (fila.pop("origen_x_utm"), fila.pop("origen_y_utm"))
+    fila.pop("fecha_obtencion", None)
+    return fila
+
+
+def entradas(carpeta: Path) -> dict[str, Path]:
+    """Ubica cartas, edificios y DENUE dentro de una partición bajada de bronce."""
+    carpeta = Path(carpeta)
+    edificios = next((p for n in NOMBRES_EDIFICIOS if (p := alm.buscar(carpeta, n, requerido=False))), None)
+    if edificios is None:
+        raise FileNotFoundError(f"No hay huellas de Overture (*.parquet) en {carpeta}")
+    denue = (alm.buscar(carpeta, "denue_31*.zip", requerido=False)
+             or alm.buscar(carpeta, "denue_inegi_31_.csv"))
+    return {"cartas": carpeta, "edificios": edificios, "denue": denue}
+
+
+def _xyz_a_cog(ruta_xyz: Path, salida: Path) -> tuple[float, float, float, float]:
+    """Copia fiel de un XYZ de 5 m como Cloud Optimized GeoTIFF (requiere rasterio/GDAL)."""
+    import rasterio
+    from rasterio.transform import from_origin
+
+    df = leer_xyz(ruta_xyz)
+    x_min, x_max, y_min, y_max = df.x.min(), df.x.max(), df.y.min(), df.y.max()
+    nx = int(round((x_max - x_min) / RESOLUCION_M)) + 1
+    ny = int(round((y_max - y_min) / RESOLUCION_M)) + 1
+    datos = np.full((ny, nx), -9999.0, dtype="float32")
+    ix = np.rint((df.x.values - x_min) / RESOLUCION_M).astype(np.int64)
+    iy = np.rint((y_max - df.y.values) / RESOLUCION_M).astype(np.int64)
+    datos[iy, ix] = df.z.values
+    medio = RESOLUCION_M / 2
+    with rasterio.open(salida, "w", driver="COG", height=ny, width=nx, count=1, dtype="float32",
+                       crs=f"EPSG:{CRS_TRABAJO}", nodata=-9999.0, compress="deflate",
+                       transform=from_origin(x_min - medio, y_max + medio, RESOLUCION_M, RESOLUCION_M)) as dst:
+        dst.write(datos, 1)
+    return x_min - medio, y_min - medio, x_max + medio, y_max + medio
+
+
+def registrar_raster(dir_cartas: Path, prefijo_bronce: str, fecha: str) -> pd.DataFrame:
+    """Sube cada carta como COG al bucket `raster` y devuelve su registro para plata.
+
+    Si rasterio no está instalado, registra la ruta del XYZ en bronce: el ráster
+    sigue en MinIO y PostgreSQL solo guarda ruta y metadatos.
+    """
+    try:
+        import rasterio  # noqa: F401
+        con_cog = True
+    except ImportError:
+        con_cog = False
+        log.warning("rasterio no está instalado: se registran los XYZ de bronce sin generar COG")
+    filas = []
+    destino = alm.prefijo(DATASET)  # raster/{equipo}/{dataset}/ (sección 4); cada corrida lo reemplaza
+    for carta, rutas in sorted(listar_cartas(dir_cartas).items()):
+        for tipo, ruta in sorted(rutas.items()):
+            fila = {"carta": carta, "tipo": {"ms": "MDS", "mt": "MDT"}[tipo], "crs": CRS_TRABAJO,
+                    "resolucion_m": RESOLUCION_M, "fecha_obtencion": fecha}
+            if con_cog:
+                with alm.carpeta_temporal("e6_cog_") as tmp:
+                    tif = tmp / f"{carta.lower()}_{tipo}.tif"
+                    caja = _xyz_a_cog(ruta, tif)
+                    fila.update(bucket=alm.BUCKET_RASTER, formato="COG",
+                                ruta=alm.subir_archivo(tif, destino + tif.name, alm.BUCKET_RASTER))
+            else:
+                caja = extension_xyz(ruta)
+                relativa = Path(ruta).relative_to(dir_cartas).as_posix()
+                fila.update(bucket=alm.BUCKET_BRONZE, formato="XYZ",
+                            ruta=prefijo_bronce + relativa)
+            fila.update(dict(zip(("x_min", "y_min", "x_max", "y_max"), map(float, caja))))
+            filas.append(fila)
+    return pd.DataFrame(filas)
+
+
+# ---------------------------------------------------------------------------
+# Etapas del DAG (las reutiliza 6.huella_construida)
+# ---------------------------------------------------------------------------
+
+def ingesta_conjunto(dataset: str, fecha: str | None = None, carpeta_local: str | Path | None = None,
+                     respaldo: str | None = None) -> str:
+    """Deja en bronce cartas MDE, huellas de Overture y DENUE de un conjunto.
+
+    Orden: (0) si se pidió explícitamente, la carpeta local (argumento o
+    E6_CRUDOS_<DATASET>); (1) lo que ya esté en bronze/6/<dataset>/;
+    (2) Drive vía gdown; (3) la partición vigente del conjunto `respaldo`.
+    El DENUE tiene enlace directo: si falta, se descarga del INEGI.
+    """
+    local = alm.carpeta_local(dataset, carpeta_local)
+    if local is not None:
+        p = alm.ingestar_carpeta_local(dataset, local, fecha)
+    elif p := alm.prefijo_vigente(dataset):
+        log.info("%s: uso lo que ya está en bronce (%s)", dataset, p)
+    elif origen := alm.fuente_drive(dataset):
+        p = alm.prefijo(dataset, fecha or alm.hoy())
+        with alm.carpeta_temporal() as tmp:
+            alm.descargar_drive(origen, tmp)
+            alm.extraer_zips(tmp)
+            alm.subir_carpeta(tmp, p)
+    elif respaldo and (p := alm.prefijo_vigente(respaldo)):
+        log.info("%s: uso los crudos de %s (%s)", dataset, respaldo, p)
+    else:
+        raise FileNotFoundError(
+            f"No hay crudos de {dataset} en s3://{alm.BUCKET_BRONZE}/{alm.prefijo(dataset)} ni enlace de "
+            f"Drive. Súbelos por la consola de MinIO o define E6_GDRIVE_{dataset.upper()}."
+        )
+
+    objetos = [o.lower() for o in alm.listar(p)]
+    if not any("denue" in o for o in objetos):
+        alm.completar_urls(p + "denue/", {Path(URLS["denue"]).name: URLS["denue"]})
+    if not any(o.endswith(".xyz") for o in objetos):
+        raise FileNotFoundError(f"{p} no tiene cartas *_ms.xyz / *_mt.xyz")
+    if not any(o.endswith(".parquet") for o in objetos):
+        raise FileNotFoundError(f"{p} no tiene las huellas de Overture (*.parquet)")
+    return p
+
+
+def ingesta(fecha: str | None = None, carpeta_local: str | Path | None = None) -> str:
+    return ingesta_conjunto(DATASET, fecha, carpeta_local)
+
+
+def plata_conjunto(dataset: str, prefijo: str | None = None, respaldo: str | None = None,
+                   verbose: bool = True) -> dict[str, pd.DataFrame]:
+    """Arma malla, cifras y registro de ráster desde la partición de bronce."""
+    prefijo = prefijo or alm.prefijo_vigente(dataset) or (respaldo and alm.prefijo_vigente(respaldo)) or None
+    with alm.crudos(dataset, prefijo) as (carpeta, fecha):
+        prefijo = prefijo or alm.prefijo_vigente(dataset)
+        e = entradas(carpeta)
+        malla, cifras = construir_malla(e["cartas"], e["edificios"], e["denue"], verbose)
+        tablas = malla_a_plata(malla, cifras, fecha)
+        tablas["raster"] = registrar_raster(e["cartas"], prefijo, fecha)
+    return tablas
+
+
+def plata(prefijo: str | None = None) -> int:
+    """Bronce -> plata."6.relieve_5m.malla", ".cifras" y ".raster" (y COG en `raster`)."""
+    tablas = plata_conjunto(DATASET, prefijo)
+    alm.cargar({TABLAS_PLATA[k]: t for k, t in tablas.items()}, alm.ESQUEMA_PLATA)
+    return len(tablas["malla"])
+
+
+def oro() -> float:
+    """plata -> oro."6.relieve_5m". Devuelve la cifra que se contrasta con el catálogo."""
+    malla = alm.leer(TABLAS_PLATA["malla"], alm.ESQUEMA_PLATA)
+    cifras = cifras_desde_plata(alm.leer(TABLAS_PLATA["cifras"], alm.ESQUEMA_PLATA))
+    tabla = oro_desde_malla(malla, cifras, str(malla["fecha_obtencion"].iloc[0]))
+    alm.cargar({VIZ_ID: tabla}, alm.ESQUEMA_ORO)
+    return valor_referencia(tabla)
 
 
 def valor_referencia(oro: pd.DataFrame) -> float:

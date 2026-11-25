@@ -32,18 +32,49 @@ La tabla de oro es un GeoDataFrame en formato largo con una columna `capa`:
 - `urbano_nuevo`: polígonos que eran no urbanos en la serie VI y urbanos en la VII.
 - `urbano_previo`: área urbana de la serie VI, como fondo del mapa.
 - `contorno`:     contorno de Yucatán y de la ZM Mérida–Progreso.
+
+Etapas (Airflow, dags/equipo_6.py):
+
+- `ingesta()`: descarga usv250s7gw.zip, usv250s6gw.zip y mun23gw.zip de
+  CONABIO a bronze/6/cambio_suelo/fecha=AAAA-MM-DD/ y los abre junto al ZIP.
+  IDEFOR no tiene archivo directo (es una capa de GeoNode); solo se descarga
+  si se define E6_IDEFOR_URL con el enlace del ZIP.
+- `plata()`:   recorta las series VI y VII y los municipios a Yucatán, en
+  EPSG:32616, y carga plata."6.cambio_suelo.ambitos", ".usv_vi" y ".usv_vii".
+- `oro()`:     cruza las series desde plata y carga oro."6.cambio_suelo".
+
+Prueba local (opcional y explícita): `ingesta(carpeta_local=...)` o la variable
+E6_CRUDOS_CAMBIO_SUELO suben una carpeta de crudos a bronce en vez de
+descargar; `construir_oro(dir_crudos)` arma el oro en memoria desde una carpeta dada.
 """
 
 from __future__ import annotations
 
 import datetime as dt
+import importlib.util
+import os
 import sys
 from pathlib import Path
 
 import geopandas as gpd
 import pandas as pd
 
+
+def _cargar_almacen():
+    """Carga pipelines/6/_almacen.py por ruta (la carpeta "6" no es un paquete)."""
+    if "e6_almacen" not in sys.modules:
+        spec = importlib.util.spec_from_file_location("e6_almacen", Path(__file__).with_name("_almacen.py"))
+        modulo = importlib.util.module_from_spec(spec)
+        sys.modules["e6_almacen"] = modulo
+        spec.loader.exec_module(modulo)
+    return sys.modules["e6_almacen"]
+
+
+alm = _cargar_almacen()
+
 VIZ_ID = "6.cambio_suelo"
+DATASET = "cambio_suelo"
+TABLAS_PLATA = {"ambitos": f"{VIZ_ID}.ambitos", "usv_vi": f"{VIZ_ID}.usv_vi", "usv_vii": f"{VIZ_ID}.usv_vii"}
 CRS_TRABAJO = 32616
 CRS_PUBLICACION = 4326
 CVE_ENT_YUCATAN = "31"
@@ -167,12 +198,28 @@ def _publicar(g: gpd.GeoDataFrame, tolerancia: float) -> gpd.GeoDataFrame:
     return g.to_crs(CRS_PUBLICACION)
 
 
-def construir_oro(dir_crudos: Path, fecha_obtencion: str | None = None) -> gpd.GeoDataFrame:
-    """Lee los crudos y devuelve la tabla de oro de 6.cambio_suelo."""
+def construir_plata(dir_crudos: Path, fecha_obtencion: str | None = None) -> dict[str, gpd.GeoDataFrame]:
+    """Ámbitos y series VI y VII recortadas a Yucatán, en EPSG:32616."""
     dir_crudos = Path(dir_crudos)
     _, ambitos = leer_limites(dir_crudos)
     s6 = leer_usv(dir_crudos / RUTAS["usv_s6"], ambitos, "VI")
     s7 = leer_usv(dir_crudos / RUTAS["usv_s7"], ambitos, "VII")
+    if fecha_obtencion is None:
+        mtime = (dir_crudos / RUTAS["usv_s7"]).stat().st_mtime
+        fecha_obtencion = dt.date.fromtimestamp(mtime).isoformat()
+    tablas = {"ambitos": ambitos, "usv_vi": s6, "usv_vii": s7}
+    for g in tablas.values():
+        g["fecha_obtencion"] = fecha_obtencion
+    return tablas
+
+
+def oro_desde_plata(ambitos: gpd.GeoDataFrame, s6: gpd.GeoDataFrame,
+                    s7: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    """Tabla de oro a partir de las tres tablas de plata (EPSG:32616)."""
+    fecha_obtencion = str(s7["fecha_obtencion"].iloc[0])
+    ambitos = ambitos.drop(columns="fecha_obtencion", errors="ignore").to_crs(CRS_TRABAJO)
+    s6 = s6.drop(columns="fecha_obtencion", errors="ignore").to_crs(CRS_TRABAJO)
+    s7 = s7.drop(columns="fecha_obtencion", errors="ignore").to_crs(CRS_TRABAJO)
     cruce = cruzar(s6, s7)
 
     transiciones = (
@@ -210,10 +257,6 @@ def construir_oro(dir_crudos: Path, fecha_obtencion: str | None = None) -> gpd.G
     oro["serie_destino"] = f"VII ({ANIO_SERIE['VII']})"
     oro["km2"] = oro["km2"].round(4)
 
-    if fecha_obtencion is None:
-        mtime = (dir_crudos / RUTAS["usv_s7"]).stat().st_mtime
-        fecha_obtencion = dt.date.fromtimestamp(mtime).isoformat()
-
     oro.insert(0, "viz_id", VIZ_ID)
     oro["fuente_primaria"] = FUENTE_PRIMARIA
     oro["fuente_secundaria"] = FUENTE_SECUNDARIA
@@ -226,6 +269,12 @@ def construir_oro(dir_crudos: Path, fecha_obtencion: str | None = None) -> gpd.G
         "fecha_obtencion", "responsable", "geometry",
     ]
     return oro[columnas]
+
+
+def construir_oro(dir_crudos: Path, fecha_obtencion: str | None = None) -> gpd.GeoDataFrame:
+    """Prueba local: crudos -> plata -> oro en memoria."""
+    p = construir_plata(dir_crudos, fecha_obtencion)
+    return oro_desde_plata(p["ambitos"], p["usv_vi"], p["usv_vii"])
 
 
 def resumen_urbano(oro: pd.DataFrame) -> pd.DataFrame:
@@ -259,9 +308,48 @@ def urbano_idefor_2020(dir_crudos: Path) -> float:
     return round(float(urbano.area.sum() / 1e6), 2)
 
 
+# ---------------------------------------------------------------------------
+# Etapas del DAG
+# ---------------------------------------------------------------------------
+
+def ingesta(fecha: str | None = None, carpeta_local: str | Path | None = None) -> str:
+    """Fuentes con enlace directo -> bronce.
+
+    Si se da una carpeta de crudos (argumento o E6_CRUDOS_CAMBIO_SUELO), se sube
+    esa carpeta y solo se descarga lo que le falte.
+    """
+    urls = {Path(URLS[k]).name: URLS[k] for k in ("usv_s7", "usv_s6", "mun23")}
+    if os.environ.get("E6_IDEFOR_URL"):
+        urls["idefor_mc2020v11_yuc_shp.zip"] = os.environ["E6_IDEFOR_URL"]
+    local = alm.carpeta_local(DATASET, carpeta_local)
+    if local is None:
+        return alm.ingestar_urls(DATASET, urls, fecha)
+    destino = alm.ingestar_carpeta_local(DATASET, local, fecha)
+    alm.completar_urls(destino, urls)
+    return destino
+
+
+def plata(prefijo: str | None = None) -> int:
+    """Bronce -> plata."6.cambio_suelo.*"."""
+    with alm.crudos(DATASET, prefijo, filtro=r"^(usv250s[67]gw|mun23gw)") as (carpeta, fecha):
+        tablas = construir_plata(carpeta, fecha)
+    alm.cargar({TABLAS_PLATA[k]: g for k, g in tablas.items()}, alm.ESQUEMA_PLATA)
+    return sum(len(g) for g in tablas.values())
+
+
+def oro() -> float:
+    """plata -> oro."6.cambio_suelo". Devuelve la cifra que se contrasta con el catálogo."""
+    p = {k: alm.leer(t, alm.ESQUEMA_PLATA) for k, t in TABLAS_PLATA.items()}
+    tabla = oro_desde_plata(p["ambitos"], p["usv_vi"], p["usv_vii"])
+    alm.cargar({VIZ_ID: tabla}, alm.ESQUEMA_ORO)
+    return valor_referencia(tabla)
+
+
 if __name__ == "__main__":
-    raiz = Path(__file__).resolve().parents[2]
-    crudos = Path(sys.argv[1]) if len(sys.argv) > 1 else raiz / "local_avances/datos_crudos/cambio_suelo"
+    # Prueba local explícita: python pipelines/6/cambio_suelo.py <carpeta_de_crudos>
+    if len(sys.argv) < 2:
+        sys.exit("Uso: cambio_suelo.py <carpeta_de_crudos>  (en producción corre el DAG equipo_6)")
+    crudos = Path(sys.argv[1])
     tabla = construir_oro(crudos)
     print(tabla.drop(columns="geometry").groupby("capa").size())
     print(resumen_urbano(tabla))

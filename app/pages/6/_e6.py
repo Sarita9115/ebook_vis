@@ -4,27 +4,27 @@ Dash no registra este archivo como página porque empieza con "_".
 
 Qué hace:
 
-- Lee la tabla de oro de cada visualización. Primero intenta el esquema `oro`
-  de PostgreSQL (lo que dice la arquitectura); si la conexión no está
-  configurada o falla, usa la copia de prueba `local_avances/oro_<subtema>.parquet`.
+- Lee la tabla de oro de cada visualización solo del esquema `oro` de
+  PostgreSQL/PostGIS (secciones 4.3 y 7 de la arquitectura): oro."<viz_id>",
+  por ejemplo oro."6.gasto_publico". No hay copia local de respaldo: si la base
+  no contesta o la tabla no existe, la página lo dice de forma explícita.
+- Lee el título y la cifra de la lectura de oro.catalogo (sección 9), fila
+  primaria del viz_id.
 - Importa `figura(datos)` desde `figures/6/<subtema>/figura.py`, sin
   redibujarla, y guarda la figura en caché mientras la tabla no cambie.
 - Arma las piezas de la plantilla: encabezado, ventana con la figura y la
-  ficha con fuentes, fecha y responsable (de oro) y la lectura (del catálogo).
+  ficha con fuentes, fecha y responsable (de oro) y la lectura.
 
-Variable de entorno opcional:
-
-    ORO_DB_URL=postgresql+psycopg2://usuario:clave@host:5432/vis
-
-La tabla se busca como oro."<viz_id>" (por ejemplo, oro."6.gasto_publico").
+Conexión: la misma que los pipelines (pipelines/6/_almacen.py): ORO_DB_URL,
+o DATABASE_URL, o POSTGRES_HOST (postgres), POSTGRES_PORT (5432),
+POSTGRES_USER, POSTGRES_PASSWORD y POSTGRES_DB.
 """
 
 from __future__ import annotations
 
-import csv
 import importlib.util
 import logging
-import os
+import sys
 import time
 from functools import lru_cache
 from pathlib import Path
@@ -34,8 +34,7 @@ import plotly.graph_objects as go
 from dash import dcc, html
 
 RAIZ = Path(__file__).resolve().parents[3]
-LOCAL = RAIZ / "local_avances"
-CATALOGO = RAIZ / "catalog" / "catalog.csv"
+ALMACEN = RAIZ / "pipelines" / "6" / "_almacen.py"
 EQUIPO = "6"
 REFRESCO_BD_S = 300
 
@@ -63,60 +62,61 @@ GRAFICA_CONFIG = {
 
 
 # ---------------------------------------------------------------------------
-# Datos
+# Datos (solo PostgreSQL, esquema oro)
 # ---------------------------------------------------------------------------
 
-def _leer_bd(viz_id: str):
-    url = os.environ.get("ORO_DB_URL")
-    if not url:
-        return None
+class ErrorOro(RuntimeError):
+    """La página no pudo leer el esquema `oro` de PostgreSQL."""
+
+
+def _almacen():
+    """El conector de los pipelines del equipo, cargado por ruta."""
+    if "e6_almacen" not in sys.modules:
+        spec = importlib.util.spec_from_file_location("e6_almacen", ALMACEN)
+        modulo = importlib.util.module_from_spec(spec)
+        sys.modules["e6_almacen"] = modulo
+        spec.loader.exec_module(modulo)
+    return sys.modules["e6_almacen"]
+
+
+def _sello() -> int:
+    """Cambia cada REFRESCO_BD_S segundos; invalida la caché de tablas y figuras."""
+    return int(time.time() // REFRESCO_BD_S)
+
+
+def _consultar(descripcion: str, funcion):
+    """Ejecuta una lectura de PostgreSQL y convierte cualquier falla en ErrorOro."""
+    alm = _almacen()
     try:
-        import geopandas as gpd
-        from sqlalchemy import create_engine, inspect
-
-        motor = create_engine(url)
-        columnas = {c["name"] for c in inspect(motor).get_columns(viz_id, schema="oro")}
-        consulta = f'SELECT * FROM oro."{viz_id}"'
-        if "geometry" in columnas:
-            return gpd.read_postgis(consulta, motor, geom_col="geometry")
-        return pd.read_sql(consulta, motor)
-    except Exception as error:  # la página no se cae: pasa al respaldo local
-        log.warning("No se pudo leer oro.%s en PostgreSQL (%s); uso la copia local.", viz_id, error)
-        return None
-
-
-def _leer_local(subtema: str):
-    ruta = LOCAL / f"oro_{subtema}.parquet"
-    if not ruta.exists():
-        raise FileNotFoundError(
-            f"No está la tabla de oro de prueba {ruta.relative_to(RAIZ)}. "
-            f"Corre local_avances/test_{subtema}.py para generarla."
-        )
+        alm.url_bd()
+    except RuntimeError as error:
+        raise ErrorOro(f"No hay conexión configurada a PostgreSQL: {error}") from error
     try:
-        import geopandas as gpd
-        return gpd.read_parquet(ruta)
-    except Exception:
-        return pd.read_parquet(ruta)  # tabla sin geometría
-
-
-def _sello(subtema: str) -> tuple:
-    """Cambia cuando la tabla puede haber cambiado; invalida la caché."""
-    if os.environ.get("ORO_DB_URL"):
-        return ("bd", int(time.time() // REFRESCO_BD_S))
-    ruta = LOCAL / f"oro_{subtema}.parquet"
-    return ("local", ruta.stat().st_mtime if ruta.exists() else 0)
+        return funcion(alm)
+    except ErrorOro:
+        raise
+    except Exception as error:
+        raise ErrorOro(f"PostgreSQL no contestó al leer {descripcion} ({type(error).__name__}: {error})") from error
 
 
 @lru_cache(maxsize=16)
-def _oro(subtema: str, sello: tuple):
-    datos = _leer_bd(f"{EQUIPO}.{subtema}")
-    if datos is None:
-        datos = _leer_local(subtema)
-    return datos
+def _oro(subtema: str, sello: int):
+    viz_id = f"{EQUIPO}.{subtema}"
+
+    def leer(alm):
+        if not alm.existe(viz_id, "oro"):
+            raise ErrorOro(f'No existe la tabla oro."{viz_id}" en PostgreSQL. Corre el DAG equipo_6.')
+        datos = alm.leer(viz_id, "oro")
+        if datos.empty:
+            raise ErrorOro(f'La tabla oro."{viz_id}" está vacía.')
+        return datos
+
+    return _consultar(f'oro."{viz_id}"', leer)
 
 
 def oro(subtema: str):
-    return _oro(subtema, _sello(subtema))
+    """Tabla de oro del subtema. Lanza ErrorOro si la base no contesta o la tabla no existe."""
+    return _oro(subtema, _sello())
 
 
 @lru_cache(maxsize=8)
@@ -129,39 +129,67 @@ def _modulo_figura(subtema: str):
 
 
 @lru_cache(maxsize=16)
-def _figura(subtema: str, sello: tuple) -> go.Figure:
+def _figura(subtema: str, sello: int) -> go.Figure:
     return _modulo_figura(subtema).figura(_oro(subtema, sello))
 
 
 def figura(subtema: str) -> go.Figure:
-    """La misma figura del PDF, o un aviso si falta la tabla de oro."""
+    """La misma figura del PDF. Si oro no se puede leer, muestra el error tal cual."""
     try:
-        return _figura(subtema, _sello(subtema))
+        return _figura(subtema, _sello())
     except Exception as error:
         log.exception("Falló la figura %s.%s", EQUIPO, subtema)
         aviso = go.Figure()
-        aviso.add_annotation(text=str(error), showarrow=False, x=0.5, y=0.5, xref="paper", yref="paper",
-                             font=dict(size=14, color="#6B6457"))
+        aviso.add_annotation(text=f"No se pudo mostrar la figura: {error}", showarrow=False,
+                             x=0.5, y=0.5, xref="paper", yref="paper", font=dict(size=14, color="#9B2C2C"))
         aviso.update_layout(xaxis_visible=False, yaxis_visible=False, plot_bgcolor="#FFFFFF",
                             paper_bgcolor="#FFFFFF", height=320)
         return aviso
 
 
-@lru_cache(maxsize=1)
-def _catalogo() -> dict:
-    with open(CATALOGO, newline="", encoding="utf-8") as f:
-        return {fila["viz_id"]: fila for fila in csv.DictReader(f)}
+@lru_cache(maxsize=4)
+def _catalogo(sello: int) -> dict:
+    """viz_id -> fila primaria del equipo en oro.catalogo."""
+    def leer(alm):
+        if not alm.existe("catalogo", "oro"):
+            raise ErrorOro("No existe la tabla oro.catalogo en PostgreSQL. Corre el DAG equipo_6.")
+        from sqlalchemy import text
+        with alm.motor().connect() as con:
+            tabla = pd.read_sql(text("SELECT * FROM oro.catalogo WHERE equipo = :e"), con, params={"e": EQUIPO})
+        filas = {}
+        for fila in tabla.to_dict("records"):
+            actual = filas.get(fila["viz_id"])
+            if actual is None or (fila.get("papel") == "primaria" and actual.get("papel") != "primaria"):
+                filas[fila["viz_id"]] = fila
+        return filas
+
+    return _consultar("oro.catalogo", leer)
+
+
+def estado_bd() -> str | None:
+    """None si oro.catalogo se puede leer; si no, el mensaje de error para mostrarlo."""
+    try:
+        _catalogo(_sello())
+        return None
+    except ErrorOro as error:
+        return str(error)
 
 
 def catalogo(subtema: str) -> dict:
-    return _catalogo().get(f"{EQUIPO}.{subtema}", {})
+    """Fila primaria del subtema en oro.catalogo; {} si no se pudo leer (la página muestra el error)."""
+    try:
+        return _catalogo(_sello()).get(f"{EQUIPO}.{subtema}", {})
+    except ErrorOro as error:
+        log.error("%s", error)
+        return {}
 
 
 def valor_catalogo(subtema: str) -> float | None:
     try:
-        return float(catalogo(subtema).get("valor_referencia") or "nan")
-    except ValueError:
+        valor = float(catalogo(subtema).get("valor_referencia") or "nan")
+    except (TypeError, ValueError):
         return None
+    return None if pd.isna(valor) else valor
 
 
 # ---------------------------------------------------------------------------
@@ -216,7 +244,7 @@ def _vacia(altura: int) -> go.Figure:
 
 
 def ventana(prefijo: str, titulo: str, contenido) -> html.Div:
-    """Ventana emergente con barra de título, como en los bocetos."""
+    """Ventana emergente con barra de título."""
     return html.Div(id=f"{prefijo}-ventana", className="e6-ventana", children=[
         html.Div(className="e6-velo", id=f"{prefijo}-velo", n_clicks=0),
         html.Div(className="e6-dialogo", role="dialog", **{"aria-modal": "true", "aria-label": titulo}, children=[
@@ -243,4 +271,10 @@ def navegacion(subtema: str) -> html.Nav:
 
 
 def pagina(*hijos) -> html.Div:
-    return html.Div(className="e6", children=html.Div(className="e6-pagina", children=list(hijos)))
+    """Contenedor de la escena. Si oro no se puede leer, lo avisa arriba de la página."""
+    error = estado_bd()
+    alerta = [html.Div(f"No se pudo leer el esquema oro de PostgreSQL: {error}",
+                       className="e6-alerta", role="alert",
+                       style={"background": "#FDECEC", "color": "#9B2C2C", "padding": "12px 16px",
+                              "border": "1px solid #9B2C2C", "borderRadius": "6px", "margin": "12px 0"})] if error else []
+    return html.Div(className="e6", children=html.Div(className="e6-pagina", children=alerta + list(hijos)))
