@@ -7,7 +7,8 @@ validacion  revisa rangos y cobertura de oro
 catalogo    deja oro."5.catalogo" con la procedencia de cada figura
 
 Cada capa corre su script de pipelines/5/ en un entorno virtual propio (PythonVirtualenvOperator), porque
-Airflow 2.x fija SQLAlchemy 1.4 y los pipelines usan SQLAlchemy
+Airflow 2.x fija SQLAlchemy 1.4 y los pipelines usan SQLAlchemy 2. Igual que el equipo 4.
+"""
 
 from datetime import datetime
 
