@@ -1,4 +1,4 @@
-"""Lo que se invierte hoy
+"""Lo que se invirtió
 viz_id: 5.lo_que_se_invirtio
 
 Sankey del sector educativo de Yucatán en 2025 (boceto del equipo):
@@ -16,7 +16,7 @@ La plantilla muestra fuentes, fecha y responsable; no van dentro de la figura.
 import pandas as pd
 import plotly.graph_objects as go
 
-TITULO = "Lo que se invierte hoy"  # debe coincidir con el título del subtema en el catálogo
+TITULO = "Lo que se invirtió"  # debe coincidir con el título del subtema en el catálogo
 CALIZA, TEXTO, TEXTO_2 = "#f7f4ec", "#1d2a22", "#4f5b52"
 LETRA = "Source Sans 3, Helvetica Neue, Helvetica, Arial, sans-serif"
 PALETA = ["#2f8c70", "#4590f5", "#e8833a", "#7f77dd"]
