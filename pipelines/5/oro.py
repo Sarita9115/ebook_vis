@@ -101,6 +101,27 @@ CONSTRUCTORES = {"treinta_anos": oro_treinta_anos, "pobreza_rezago": oro_pobreza
                  "la_casa_cambio": oro_la_casa_cambio, "lo_que_se_invirtio": oro_lo_que_se_invirtio}
 
 
+def version(*viz_ids: str) -> tuple:
+    """Huella barata de las tablas de oro, para saber si cambiaron sin volver a leerlas (la usa la página)."""
+    ids = viz_ids or tuple(f"5.{s}" for s in CONSTRUCTORES)
+    with comun.motor().connect() as con:
+        oids = dict(con.exec_driver_sql(
+            "select relname, oid from pg_class where relnamespace = 'oro'::regnamespace and relkind = 'r'").all())
+        existentes = [v for v in ids if v in oids]
+        filas = {}
+        if existentes:
+            consulta = " union all ".join(
+                f"""select '{v.replace("'", "''")}', count(*), max(xmin::text::bigint) """
+                f'''from {ESQUEMA}."{v.replace('"', '""')}"''' for v in existentes)
+            filas = {n: (c, x) for n, c, x in con.exec_driver_sql(consulta).all()}
+    return tuple((v, oids.get(v), *filas.get(v, (None, None))) for v in ids)
+
+
+def leer(viz_id: str) -> pd.DataFrame:
+    """Lee la tabla de oro vigente desde PostgreSQL (la deja el DAG equipo_5)."""
+    return comun.leer_tabla(ESQUEMA, viz_id)
+
+
 def construir() -> dict[str, pd.DataFrame]:
     fechas = _plata("bronce_archivos")
     tablas = {f"5.{sub}": _con_meta(fn(), sub, fechas) for sub, fn in CONSTRUCTORES.items()}

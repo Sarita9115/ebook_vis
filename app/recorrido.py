@@ -48,6 +48,7 @@ CAPITULOS = [
         "equipo": "5",
         "titulo": "Más años en el aula, ¿mejor vida en casa?",
         "pregunta": "¿Más años en el aula coinciden con mejor vida en casa?",
+        "capitulo": ("/5", "Abrir la historia de este capítulo"),
         "subtemas": [
             ("treinta_anos", "Treinta años aprendiendo"),
             ("la_respuesta", "La respuesta"),
@@ -119,6 +120,10 @@ CAPITULOS = [
 
 # Páginas que ya están registradas con su propia ruta.
 PAGINAS = {
+    ("5", "treinta_anos"): "/5#treinta_anos",
+    ("5", "pobreza_rezago"): "/5#pobreza_rezago",
+    ("5", "la_casa_cambio"): "/5#la_casa_cambio",
+    ("5", "lo_que_se_invirtio"): "/5#lo_que_se_invirtio",
     ("6", "gasto_publico"): "/6/gasto_publico",
     ("6", "cambio_suelo"): "/6/cambio_suelo",
     ("6", "corredor_industrial"): "/6/corredor_industrial",
