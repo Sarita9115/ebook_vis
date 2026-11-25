@@ -6,7 +6,7 @@ Barras espalda con espalda, rural a la izquierda y urbano a la derecha
 
 Tabla de oro (`datos`), formato largo, Yucatán, ITER 2010 y 2020:
     indicador   "Agua entubada", "Energía eléctrica", "Piso firme",
-                "Acceso a Internet", "Bienes (celular/PC)"
+                "Acceso a Internet", "Celular", "Computadora"
     anio        2010 o 2020
     ambito      "Rural" o "Urbano"
     porcentaje  % de viviendas particulares habitadas
@@ -21,7 +21,7 @@ CALIZA, TEXTO, TEXTO_2 = "#f7f4ec", "#1d2a22", "#4f5b52"
 LETRA = "Source Sans 3, Helvetica Neue, Helvetica, Arial, sans-serif"
 REJILLA = "#e3dfd2"
 INDICADORES = ["Agua entubada", "Energía eléctrica", "Piso firme",
-               "Acceso a Internet", "Bienes (celular/PC)"]
+               "Acceso a Internet", "Celular", "Computadora", "Bienes (celular/PC)"]
 ESTILO = {
     2010: dict(color="white", line=dict(color=TEXTO, width=1.5)),
     2020: dict(color="white", line=dict(color=TEXTO, width=1.5),
@@ -53,8 +53,7 @@ def figura(datos) -> go.Figure:
     if d.empty:
         return fig
     orden = [i for i in INDICADORES if i in set(d["indicador"])]
-    if not orden:
-        orden = list(dict.fromkeys(d["indicador"]))
+    orden += [i for i in dict.fromkeys(d["indicador"]) if i not in orden]  # los no listados, al final
     for ambito, signo in [("Rural", -1), ("Urbano", 1)]:
         for anio in (2010, 2020):
             s = d[(d["ambito"] == ambito) & (d["anio"] == anio)]

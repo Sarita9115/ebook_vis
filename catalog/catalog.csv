@@ -31,11 +31,17 @@ equipo,subtema,viz_id,papel,enlace,valor_referencia,tolerancia,streaming,estado
 4,"IED hacia Yucatán por año, ranking y origen (2018-2025)",4.ied_ranking_origen,,,,,,pendiente
 4,"Turismo y derrama económica",4.turismo_derrama,,,,,,pendiente
 4,"Efecto económico de la apertura al exterior",4.apertura_exterior,,,,,,pendiente
-5,"Treinta años aprendiendo",5.treinta_anos,,,,,,pendiente
+5,Treinta años aprendiendo,5.treinta_anos,primaria,https://www.inegi.org.mx/app/tabulados/interactivos/?pxq=Educacion_Educacion_05_0f341dd6-e247-4d7f-b644-d74afd1e361f,,,no,pendiente de validar
+5,Treinta años aprendiendo,5.treinta_anos,secundaria,https://www.inegi.org.mx/contenidos/programas/ccpv/1990/tabulados/CPyV90_Nal_Caracteristicas_educativas.xlsx,,,no,pendiente de validar
+5,Treinta años aprendiendo,5.treinta_anos,secundaria,https://www.coneval.org.mx/Medicion/Documents/IRS_2020/IRS_ent_mun_2000_2020.zip,,,no,pendiente de validar
 5,"La respuesta",5.la_respuesta,,,,,,pendiente
-5,"Pobreza y rezago",5.pobreza_rezago,,,,,,pendiente
-5,"La casa cambió",5.la_casa_cambio,,,,,,pendiente
-5,"Lo que se invirtió",5.lo_que_se_invirtio,,,,,,pendiente
+5,Pobreza y rezago,5.pobreza_rezago,primaria,https://www.datos.gob.mx/dataset/b6981ccc-083b-4e57-ba6f-d800a7398fa8/resource/6e409e3a-aa08-45f5-b84b-f5d8cc6fafa8/download/pobreza_municipal.csv,,,no,pendiente de validar
+5,Pobreza y rezago,5.pobreza_rezago,secundaria,https://www.coneval.org.mx/Medicion/Documents/IRS_2020/IRS_ent_mun_2000_2020.zip,,,no,pendiente de validar
+5,La casa cambió,5.la_casa_cambio,primaria,https://www.inegi.org.mx/contenidos/programas/ccpv/2020/datosabiertos/iter/iter_31_cpv2020_csv.zip,,,no,pendiente de validar
+5,La casa cambió,5.la_casa_cambio,secundaria,https://www.inegi.org.mx/contenidos/programas/ccpv/2010/datosabiertos/iter_nal_2010_csv.zip,,,no,pendiente de validar
+5,Lo que se invirtió,5.lo_que_se_invirtio,primaria,https://www.yucatan.gob.mx/docs/transparencia/cuenta_publica/2025/TII_pe.pdf,,,no,pendiente de validar
+5,Lo que se invirtió,5.lo_que_se_invirtio,secundaria,https://www.yucatan.gob.mx/docs/transparencia/cuenta_publica/2025/TVI_cp_comp_2025.pdf,,,no,pendiente de validar
+5,Lo que se invirtió,5.lo_que_se_invirtio,secundaria,https://www.inegi.org.mx/app/tabulados/interactivos/?pxq=Educacion_Educacion_05_0f341dd6-e247-4d7f-b644-d74afd1e361f,,,no,pendiente de validar
 5,"El entorno de la escuela",5.entorno_escuela,,,,,,pendiente
 5,"Las metas del estado",5.metas_estado,,,,,,pendiente
 5,"La geografía de la dispersión",5.geografia_dispersion,,,,,,pendiente
