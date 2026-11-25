@@ -14,7 +14,7 @@ from pathlib import Path
 
 from dash import Input, Output, callback, dcc, html
 
-RAIZ = Path(__file__).resolve().parents[3]
+RAIZ = Path(__file__).resolve().parents[2]
 
 
 def _modulo(ruta: Path, nombre: str):
