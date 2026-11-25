@@ -16,10 +16,11 @@ Tabla de oro (`datos`): una fila por especie.
     categoria     categoría NOM-059: "P", "A", "Pr", "E" o su texto completo
     x, y, z       listas con las coordenadas de los vértices (eje z = arriba)
     i, j, k       listas con los índices de los vértices de cada triángulo
-    colores       opcional: lista de [r, g, b] (0-255) por vértice
+    colores_cara  opcional: lista de [r, g, b] (0-255), una por triángulo
+    colores       opcional: lista de [r, g, b] (0-255), una por vértice
 
-El GLB no viaja al navegador: producción lo convierte a malla simplificada al
-pasar a oro. `malla_desde_glb` hace esa conversión (necesita `trimesh`).
+El GLB no viaja al navegador: `pipelines/2/oro_ingrid.py` lo convierte a malla y
+deja esta tabla (el color de cada cara sale de la textura del modelo).
 """
 
 import math
@@ -123,9 +124,12 @@ def figura(datos) -> go.Figure:
             hoverinfo="text", text=f"{fila['nombre']} ({fila['cientifico']})",
             visible=(idx == 0), scene="scene",
         )
-        colores = fila["colores"] if "colores" in df.columns else None
-        if colores is not None and len(colores) == len(x):
-            malla["vertexcolor"] = np.asarray(colores)
+        por_cara = fila["colores_cara"] if "colores_cara" in df.columns else None
+        por_vertice = fila["colores"] if "colores" in df.columns else None
+        if por_cara is not None and len(por_cara) == len(fila["i"]):
+            malla["facecolor"] = [f"rgb({int(r)},{int(g)},{int(b)})" for r, g, b in por_cara]
+        elif por_vertice is not None and len(por_vertice) == len(x):
+            malla["vertexcolor"] = np.asarray(por_vertice)
         else:
             malla["color"] = COLOR_MODELO
         fig.add_trace(go.Mesh3d(**malla))
@@ -160,30 +164,3 @@ def figura(datos) -> go.Figure:
         )],
     )
     return fig
-
-
-def malla_desde_glb(ruta, max_caras=4000):
-    """Lee un GLB y devuelve el dict de columnas (x, y, z, i, j, k, colores).
-
-    Lo usa producción al pasar a oro, no la figura. Necesita `trimesh`.
-    El GLB trae el eje Y hacia arriba; Plotly usa Z, así que se rota.
-    """
-    import trimesh
-
-    m = trimesh.load(ruta, force="mesh")
-    if len(m.faces) > max_caras:
-        try:
-            m = m.simplify_quadric_decimation(face_count=max_caras)
-        except Exception:
-            pass  # sin el paquete de simplificación se deja la malla completa
-    v = np.asarray(m.vertices, dtype=float)
-    x, y, z = v[:, 0], -v[:, 2], v[:, 1]  # Y-arriba -> Z-arriba
-    colores = None
-    try:
-        colores = np.asarray(m.visual.to_color().vertex_colors)[:, :3].tolist()
-    except Exception:
-        pass
-    f = np.asarray(m.faces)
-    return dict(x=x.tolist(), y=y.tolist(), z=z.tolist(),
-                i=f[:, 0].tolist(), j=f[:, 1].tolist(), k=f[:, 2].tolist(),
-                colores=colores)
