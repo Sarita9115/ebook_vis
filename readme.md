@@ -26,7 +26,7 @@ ebook_vis/
 
 | Carpeta | Quién la escribe | Qué hay dentro |
 | --- | --- | --- |
-| `figures/` | Quien hace la gráfica | La función que construye el `go.Figure`. La web y el PDF importan esta función. |
+| `figures/` | Producción | La función que construye el `go.Figure`. La web y el PDF importan esta función. |
 | `app/pages/` | Producción, con la plantilla | La página de la aplicación. No redibuja la figura: la importa de `figures/`. |
 | `pipelines/` | Producción | La limpieza que deja la tabla de oro de cada subtema. |
 | `dags/` | Producción | Un proceso por equipo: ingesta, plata, oro, validación y catálogo. |
@@ -34,9 +34,54 @@ ebook_vis/
 | `ebook/` | Producción | El libro. Exporta la misma función de `figures/` a imagen. |
 | `docs/` | Producción | Los dos documentos de acuerdo. Aquí no van gráficas. |
 
-Los archivos crudos no viven en este repositorio. Mientras no exista el datalake, se quedan en la carpeta de Drive del curso, separados por equipo y por conjunto. La gráfica no apunta a esa carpeta: recibe la tabla preparada en `datos`. Cuando MinIO y PostgreSQL estén en Docker, esa misma tabla sale de oro y la función no cambia de ruta.
+Los archivos crudos no viven en este repositorio. La copia de trabajo de cada quien va en `datos/{equipo}/`, y la copia compartida sigue en la carpeta de Drive del curso. La gráfica no apunta a esa carpeta: recibe la tabla de oro en el argumento `datos`.
 
-## Dónde va tu archivo
+## Del archivo crudo a la figura
+
+Hay tres piezas distintas. El pipeline prepara la tabla. El DAG la manda a correr. La figura solo dibuja.
+
+### Qué es un pipeline
+
+El pipeline es el código de `pipelines/{equipo}/`. Limpia y publica. No dibuja.
+
+Son tres pasos, siempre en este orden. Cada uno deja el resultado en un lugar distinto.
+
+1. **Ingesta.** Copia el archivo crudo, sin transformarlo, a MinIO, bucket `bronze`. La función se llama `ingerir()`. En el equipo 4 está en `pipelines/4/ingesta.py`: lee `datos/4/` (y descarga dos zip de INEGI) y los deja como objetos `bronze/4/<archivo>`.
+2. **Plata.** Lee ese bronce, limpia tipos, nombres y textos, y escribe tablas en PostgreSQL, esquema `plata`. La función se llama `construir()`, en `pipelines/{equipo}/plata.py`.
+3. **Oro.** Lee plata y deja una tabla por subtema en el esquema `oro`. El nombre de la tabla es el `viz_id`, por ejemplo `oro."4.ied_por_pais"`. `construir()` las publica todas. `leer(viz_id)` lee una. En el equipo 4 está en `pipelines/4/oro.py`.
+
+Lo restringido va al bucket `bronze-restringido`. El ráster va al bucket `raster`. Las tablas de las figuras viven en la base `vis`. Airflow usa otra base, `airflow`, en el mismo PostgreSQL: ahí guarda sus corridas, no los datos de las gráficas.
+
+Hoy solo el equipo 4 tiene las tres funciones. Los equipos 1, 2, 3 y 6 arman su tabla leyendo una carpeta local (`construir_oro` o la función equivalente de ese subtema) y esa tabla es el `datos` de la figura. El equipo 5 todavía no tiene carpeta `pipelines/5/`.
+
+### Qué es un DAG y dónde entra
+
+Un DAG es el proceso que Airflow ejecuta para un equipo. El archivo es `dags/equipo_{n}.py` y dentro de Airflow se llama `equipo_{n}`. No guarda datos: llama a los scripts del pipeline, en este orden.
+
+```text
+ingesta → plata → oro → validacion → catalogo
+```
+
+Con `docker compose up`, Airflow monta `dags/` en `/opt/airflow/dags` y `pipelines/` en `/opt/airflow/pipelines`. La interfaz queda en http://localhost:8080, usuario `admin`. Disparar `equipo_4` corre `ingerir()` y después `construir()` de plata y de oro, cada una en un entorno virtual propio (Airflow trae SQLAlchemy 1.4 y los pipelines usan la 2). `validacion` y `catalogo` siguen vacías.
+
+`equipo_1.py`, `equipo_2.py`, `equipo_3.py`, `equipo_5.py` y `equipo_6.py` tienen la misma cadena, pero cada tarea está vacía. Airflow la marca terminada y no lee archivos. Subir un archivo a MinIO no dispara esos procesos.
+
+### Dónde se conecta cada ruta
+
+| Qué | Ruta |
+| --- | --- |
+| Archivo de trabajo, fuera de Git | `datos/{equipo}/` en tu máquina. La copia compartida está en Drive. |
+| Bronce | MinIO, objeto `bronze/{equipo}/<archivo>`. El equipo 4 usa el prefijo `4/`. |
+| Plata y oro | PostgreSQL, base `vis`, tablas `plata."<nombre>"` y `oro."<viz_id>"`. |
+| Figura | `figures/{equipo}/{subtema}/figura.py`, función `figura(datos)`. `datos` es la tabla de oro. Esta función no abre MinIO ni PostgreSQL. |
+| Página del equipo 4 | `/4`, en `app/pages/4/historia.py`. Llama a `pipelines/4/oro.py` → `leer("4.<subtema>")` y pasa esa tabla a `figura`. |
+| Páginas del equipo 6 | `/6/gasto_publico`, `/6/cambio_suelo`, `/6/corredor_industrial`, `/6/relieve_5m`, `/6/huella_construida`. `app/pages/6/_e6.py` lee `oro."6.<subtema>"` si existe la variable `ORO_DB_URL`. Si no, usa un parquet de prueba en `local_avances/`. |
+| Menú | `/`, en `app/pages/inicio.py`. Los capítulos y el destino de cada vínculo están en `app/recorrido.py`. |
+| Subtema sin página | `/v/{equipo}/{subtema}`, la ficha de `app/pages/subtema.py`. El vínculo ya existe; la figura todavía no. |
+
+El PDF importa la misma `figura(datos)`. No tiene ruta en la web.
+
+## Visualizaciones
 
 ```text
 figures/{equipo}/{subtema}/figura.py
@@ -105,9 +150,9 @@ La ruta es:
 bronze/{equipo}/{dataset}/fecha=AAAA-MM-DD/
 ```
 
-El equipo 3, por ejemplo, deja un censo en `bronze/3/censo_2020/fecha=2026-11-19/`. Lo restringido va a `bronze-restringido`, con la misma forma de ruta. El ráster va al bucket `raster`.
+El equipo 3, por ejemplo, deja un censo en `bronze/3/censo_2020/fecha=2026-11-19/`. Lo restringido va a `bronze-restringido`, con la misma forma de ruta. El ráster va al bucket `raster`. El pipeline que ya corre, el del equipo 4, no usa esa partición por fecha: `ingesta.py` escribe y `plata.py` lee objetos `bronze/4/<archivo>`, con el nombre del archivo de `datos/4/`.
 
-Ese MinIO es local: cada quien ve solo lo que subió en su Docker. El lugar compartido, mientras no haya un servidor, sigue siendo la carpeta de Drive del curso. Los DAG todavía no leen esos archivos: las tareas de ingesta, plata y oro están vacías, así que subir el archivo no dispara el proceso. La figura tampoco abre MinIO. Recibe la tabla en `datos`, y esa función no cambia de ruta cuando `datos` pase a salir de oro.
+Ese MinIO es local: cada quien ve solo lo que subió en su Docker. El lugar compartido sigue siendo la carpeta de Drive del curso. Solo el DAG `equipo_4` lee el bronce y publica plata y oro. En los otros cinco, ingesta, plata y oro están vacías, así que subir el archivo no dispara el proceso. La figura tampoco abre MinIO: recibe la tabla en `datos`.
 
 ## Qué no entra en Git
 
