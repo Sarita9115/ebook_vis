@@ -43,6 +43,10 @@ log = logging.getLogger("equipo6")
 
 # Orden de las escenas del capítulo, para la navegación entre páginas.
 ESCENAS = [
+    ("densidad_unidades", "/6/densidad_unidades", "Puerta DENUE / SAIC"),
+    ("aporte_pib", "/6/aporte_pib", "Bóveda del PIB"),
+    ("atraccion_capital", "/6/atraccion_capital", "Fábrica de IED"),
+    ("obra_publica", "/6/obra_publica", "Obras y Municipios"),
     ("gasto_publico", "/6/gasto_publico", "Palacio de Presupuesto"),
     ("cambio_suelo", "/6/cambio_suelo", "Expansión Mérida–Progreso"),
     ("corredor_industrial", "/6/corredor_industrial", "Corredor Industrial"),
