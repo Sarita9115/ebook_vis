@@ -7,14 +7,24 @@ equipo,subtema,viz_id,papel,enlace,valor_referencia,tolerancia,streaming,estado
 1,"Vinculación con la industria y empleo",1.vinculacion_empleo,,,,,,pendiente
 1,"Movilidad y colaboración internacional",1.movilidad_internacional,,,,,,pendiente
 1,"Participación estudiantil y comunidad",1.participacion_estudiantil,,,,,,pendiente
-2,"Dónde se cuida la península",2.donde_se_cuida,,,,,,pendiente
-2,"Yucatán, al lado de sus reservas",2.yucatan_reservas,,,,,,pendiente
+2,"Dónde se cuida la península",2.donde_se_cuida
+primaria: https://gaia.inegi.org.mx/wscatgeo/v2/geo/mgem/31
+2,"Yucatán, al lado de sus reservas",2.yucatan_reservas
+primari: https://sds.yucatan.gob.mx/areas-naturales/sanpy.php
+secundaria: https://datos.yucatan.gob.mx/storage/boletines/archivos/2026/Boletin_2026_03.pdf
 2,"Herbario CICY, plantas vasculares",2.herbario_cicy,,,,,,pendiente
-2,"La fauna de la península, en tu espacio",2.fauna_nom059,,,,,,pendiente
+2,"La fauna de la península, en tu espacio",2.fauna_nom059
+primaria,https://static.poly.pizza/4866ebc9-2633-4356-b1e7-b74627e5cbd4.glb,988,0,no,figura lista; falta validar
+primaria,https://static.poly.pizza/6a03a835-2d9e-4694-8ab0-f308a22724c0.glb,652,0,no,figura lista; falta validar
+secundaria,https://www.profepa.gob.mx/innovaportal/file/435/1/NOM_059_SEMARNAT_2010.pdf,"Jaguar (Panthera onca) y manatí (Trichechus manatus): En peligro de extinción (P) en la NOM-059-SEMARNAT-2010.",0 (dato documental),no,figura lista; falta validar
 2,"Unidades económicas de impacto ambiental o relación con la biodiversidad",2.unidades_en_reservas,,,,,,pendiente
 2,"Impacto por municipio ocasionado por la cría de cerdo en la península",2.cria_de_cerdo,,,,,,pendiente
 2,"Cada tipo de negocio situado en cada reserva natural",2.negocios_en_reservas,,,,,,pendiente
-2,"Los ecosistemas que protege la península",2.ecosistemas,,,,,,pendiente
+2,"Los ecosistemas que protege la península"
+
+primaria,https://www.datos.gob.mx/dataset/informacion_monitoreo_evaluacion_para_conservacion/resource/fd923799-1d5b-4a34-91f7-f66d7440a118,40,0,no,validado_con_alcance
+secundaria,https://historico.datos.gob.mx/busca/dataset/simec/resource/489f051b-8d8a-4d86-8c00-7f03949e70dd,"Calakmul: 723,185 ha en SIMEC frente a 728,909 ha en el CSV de CONANP. El CSV trae 3 ANP más que SIMEC (Chunyaxché, Felipe Carrillo Puerto, Arrecifes del Golfo de México-Sur). Se registra la discrepancia.",No aplica (contexto de contraste),no,validado_con_alcance
+
 3,"Crecimiento poblacional y densidad territorial",3.crecimiento_densidad,,,,,,pendiente
 3,"Ranking porcentual del crecimiento poblacional de los estados de México",3.ranking_crecimiento,,,,,,pendiente
 3,"Natalidad y crecimiento poblacional de los municipios de Yucatán",3.natalidad,,,,,,pendiente
