@@ -2,10 +2,14 @@
 
 ingesta >> plata >> oro >> validacion >> catalogo
 
-Cada tarea corre los cinco subtemas con pipelines conectados, en este orden
+Cada tarea corre los nueve subtemas con pipelines conectados, en este orden
 (huella_construida reutiliza la malla de relieve_5m, por eso va después):
 
+    densidad_unidades, aporte_pib, atraccion_capital, obra_publica,
     gasto_publico, cambio_suelo, corredor_industrial, relieve_5m, huella_construida
+
+Los cuatro primeros leen varios datasets de bronce cada uno (bronze/6/<dataset>/fecha=...); su lista está en
+la constante DATASETS de cada módulo. Si falta alguno, la ingesta falla con la lista de rutas que hay que subir.
 
 - ingesta:    fuentes -> MinIO bronze/6/<subtema>/fecha=<ds>/
 - plata:      bronce -> PostgreSQL plata.* (EPSG:32616) y COG en MinIO raster/6/relieve_5m/
@@ -41,7 +45,8 @@ from airflow.models.param import Param
 from airflow.operators.python import PythonVirtualenvOperator
 from airflow.utils.trigger_rule import TriggerRule
 
-SUBTEMAS = ["gasto_publico", "cambio_suelo", "corredor_industrial", "relieve_5m", "huella_construida"]
+SUBTEMAS = ["densidad_unidades", "aporte_pib", "atraccion_capital", "obra_publica",
+            "gasto_publico", "cambio_suelo", "corredor_industrial", "relieve_5m", "huella_construida"]
 REQUISITOS = [
     "pandas>=2.2", "numpy>=1.26", "pyarrow>=15", "shapely>=2.0", "geopandas>=1.0", "pyogrio>=0.9",
     "sqlalchemy>=2.0", "psycopg2-binary>=2.9", "geoalchemy2>=0.15", "minio>=7.2", "openpyxl>=3.1",
@@ -84,7 +89,8 @@ def correr_etapa(etapa: str, subtemas: list, fecha: str = "", crudos_locales: st
             raise RuntimeError(f"No hay resultados de validación de la corrida {run_id}; no se publica el catálogo")
         bronce = {}
         for subtema in subtemas:
-            for conjunto in (subtema, "relieve_5m"):  # huella_construida puede usar los crudos de relieve_5m
+            # Un módulo con varios datasets los declara en DATASETS; huella_construida puede usar los de relieve_5m.
+            for conjunto in (getattr(pipeline(subtema), "DATASETS", None) or (subtema, "relieve_5m")):
                 resumen = alm.resumen_bronce(conjunto)
                 if resumen:
                     bronce[f"{alm.EQUIPO}.{subtema}"] = resumen

@@ -70,19 +70,19 @@ equipo,subtema,viz_id,papel,enlace,valor_referencia,tolerancia,streaming,estado
 5,"El entorno de la escuela",5.entorno_escuela,,,,,,pendiente
 5,"Las metas del estado",5.metas_estado,,,,,,pendiente
 5,"La geografía de la dispersión",5.geografia_dispersion,,,,,,pendiente
-6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,primaria,https://www.inegi.org.mx/app/descarga/?ti=6,,,no,borrador
-6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_31.xlsx,,,no,borrador
-6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_04.xlsx,,,no,borrador
-6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_23.xlsx,,,no,borrador
-6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson,,,no,borrador
-6,"Aporte del sector empresarial al PIB estatal y regional",6.aporte_pib,primaria,https://www.inegi.org.mx/programas/pibent/2018/#tabulados,1164.315,0.001,no,borrador
-6,"Aporte del sector empresarial al PIB estatal y regional",6.aporte_pib,secundaria,https://www.inegi.org.mx/app/descarga/?ti=6,,,no,borrador
-6,"Atracción de capital, empleo y evolución de las unidades económicas en Yucatán",6.atraccion_capital,primaria,https://www.datos.gob.mx/dataset/inversion_extranjera_directa,,,no,borrador
-6,"Atracción de capital, empleo y evolución de las unidades económicas en Yucatán",6.atraccion_capital,secundaria,https://www.inegi.org.mx/app/descarga/?ti=6,,,no,borrador
-6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,primaria,https://ssop.yucatan.gob.mx/mapaobras,,,no,borrador
-6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_31.xlsx,,,no,borrador
-6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,secundaria,https://www.inegi.org.mx/temas/mg/#Descargas,,,no,borrador
-6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,secundaria,https://www.inegi.org.mx/app/indicesdeprecios/Estructura.aspx?idEstructura=112001700030&T=%C3%8Dndices+de+Precios+al+Consumidor&ST=INPC+Nacional+%28mensual%29,,,no,borrador
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,primaria,https://www.inegi.org.mx/app/descarga/?ti=6,146384,0,no,figura lista; falta validar
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_31.xlsx,2502326,0,no,figura lista; falta validar
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_04.xlsx,967098,0,no,figura lista; falta validar
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_23.xlsx,2095074,0,no,figura lista; falta validar
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson,3,0,no,figura lista; falta validar
+6,"Aporte del sector empresarial al PIB estatal y regional",6.aporte_pib,primaria,https://www.inegi.org.mx/programas/pibent/2018/#tabulados,1164.315,0.001,no,figura lista; falta validar
+6,"Aporte del sector empresarial al PIB estatal y regional",6.aporte_pib,secundaria,https://www.inegi.org.mx/app/descarga/?ti=6,146384,0,no,figura lista; falta validar
+6,"Atracción de capital, empleo y evolución de las unidades económicas en Yucatán",6.atraccion_capital,primaria,https://www.datos.gob.mx/dataset/inversion_extranjera_directa,1493.5,0.1,no,figura lista; falta validar
+6,"Atracción de capital, empleo y evolución de las unidades económicas en Yucatán",6.atraccion_capital,secundaria,https://www.inegi.org.mx/app/descarga/?ti=6,117793,0,no,figura lista; falta validar
+6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,primaria,https://ssop.yucatan.gob.mx/mapaobras,4249,1,no,figura lista; falta validar
+6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_31.xlsx,2502326,0,no,figura lista; falta validar
+6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,secundaria,https://www.inegi.org.mx/temas/mg/#Descargas,106,0,no,figura lista; falta validar
+6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,secundaria,https://www.inegi.org.mx/app/indicesdeprecios/Estructura.aspx?idEstructura=112001700030&T=%C3%8Dndices+de+Precios+al+Consumidor&ST=INPC+Nacional+%28mensual%29,1.0381,0.001,no,figura lista; falta validar
 6,"Gasto público estatal y fomento económico: hacia dónde va el presupuesto de Yucatán",6.gasto_publico,primaria,https://www.yucatan.gob.mx/docs/transparencia/datos_abiertos/2025/Datos_abiertos_triemstre_4_2025.csv,7.78,0.05,no,pendiente
 6,"Gasto público estatal y fomento económico: hacia dónde va el presupuesto de Yucatán",6.gasto_publico,secundaria,https://www.yucatan.gob.mx/docs/transparencia/datos_abiertos/egresos_IVTrim_2024.csv,,,no,pendiente
 6,"Gasto público estatal y fomento económico: hacia dónde va el presupuesto de Yucatán",6.gasto_publico,secundaria,https://www.yucatan.gob.mx/docs/transparencia/datos_abiertos/2025/Datos_abiertos_triemstre_3_2025.csv,,,no,pendiente
