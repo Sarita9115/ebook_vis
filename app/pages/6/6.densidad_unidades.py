@@ -101,4 +101,6 @@ clientside_callback(
 def cargar(_, cargada):
     if cargada:
         return no_update, no_update
-    return e6.figura(SUBTEMA), True
+    fig = e6.figura(SUBTEMA)
+    fig.update_layout(width=None, autosize=True)  # ocupa el ancho de la ventana (el PDF conserva el ancho fijo)
+    return fig, True

@@ -167,4 +167,56 @@
   <line x1="422" y1="572" x2="762" y2="688" stroke="#EAE3D2" stroke-width="3.5" class="banda-linea" />
   <g stroke="#2B2A26" stroke-width="2" stroke-linejoin="round">
     <rect x="488" y="544" width="42" height="36" rx="2" fill="#C2562F" transform="rotate(18 509 562)" />
-    
+    <rect x="598" y="582" width="46" height="38" rx="2" fill="#1F7A80" transform="rotate(18 621 601)" />
+    <rect x="698" y="618" width="42" height="34" rx="2" fill="#CBBF9F" transform="rotate(18 719 635)" />
+  </g>
+  <circle cx="438.0" cy="588.0" r="9" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" /><circle cx="438.0" cy="588.0" r="3" fill="#2B2A26" />
+  <circle cx="481.4" cy="602.9" r="9" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" /><circle cx="481.4" cy="602.9" r="3" fill="#2B2A26" />
+  <circle cx="524.9" cy="617.7" r="9" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" /><circle cx="524.9" cy="617.7" r="3" fill="#2B2A26" />
+  <circle cx="568.3" cy="632.6" r="9" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" /><circle cx="568.3" cy="632.6" r="3" fill="#2B2A26" />
+  <circle cx="611.7" cy="647.4" r="9" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" /><circle cx="611.7" cy="647.4" r="3" fill="#2B2A26" />
+  <circle cx="655.1" cy="662.3" r="9" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" /><circle cx="655.1" cy="662.3" r="3" fill="#2B2A26" />
+  <circle cx="698.6" cy="677.1" r="9" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" /><circle cx="698.6" cy="677.1" r="3" fill="#2B2A26" />
+  <circle cx="742.0" cy="692.0" r="9" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" /><circle cx="742.0" cy="692.0" r="3" fill="#2B2A26" />
+</g>
+
+
+<ellipse cx="295" cy="652" rx="145" ry="18" fill="#BFB293" opacity="0.72" />
+
+
+<g class="engrane-ccw-3">
+  <path d="M 227.08 579.69 L 228.41 583.34 L 251.38 581.11 L 252.75 592.90 L 229.88 595.97 L 227.43 606.78 L 225.79 610.31 L 243.61 624.97 L 236.24 634.27 L 217.89 620.27 L 208.52 626.18 L 204.87 627.52 L 207.10 650.49 L 195.31 651.85 L 192.24 628.98 L 181.43 626.54 L 177.90 624.90 L 163.24 642.72 L 153.94 635.35 L 167.94 617.00 L 162.03 607.63 L 160.69 603.98 L 137.72 606.21 L 136.36 594.42 L 159.23 591.34 L 161.67 580.54 L 163.31 577.01 L 145.49 562.35 L 152.86 553.05 L 171.21 567.04 L 180.58 561.13 L 184.23 559.80 L 182.00 536.83 L 193.79 535.46 L 196.87 558.34 L 207.67 560.78 L 211.20 562.42 L 225.86 544.60 L 235.16 551.97 L 221.17 570.32 Z" fill="#9C8F6E" stroke="#2B2A26" stroke-width="2.5" stroke-linejoin="round" />
+  <circle cx="194.6" cy="593.7" r="24" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" />
+  <circle cx="194.6" cy="593.7" r="10" fill="#1F7A80" stroke="#2B2A26" stroke-width="2" />
+</g>
+
+
+<g class="engrane-ccw-2">
+  <path d="M 257.01 472.59 L 253.46 474.77 L 260.62 496.72 L 249.91 500.78 L 240.70 479.62 L 228.87 480.72 L 224.71 480.40 L 217.60 502.36 L 206.55 499.36 L 211.54 476.82 L 201.32 470.76 L 198.14 468.06 L 179.48 481.65 L 172.31 472.72 L 189.59 457.42 L 184.88 446.51 L 183.90 442.45 L 160.82 442.48 L 160.26 431.04 L 183.24 428.82 L 185.85 417.23 L 187.43 413.37 L 168.74 399.83 L 175.01 390.24 L 194.91 401.95 L 203.83 394.10 L 207.38 391.92 L 200.22 369.97 L 210.93 365.90 L 220.15 387.07 L 231.98 385.97 L 236.13 386.29 L 243.24 364.32 L 254.29 367.33 L 249.31 389.87 L 259.53 395.93 L 262.70 398.63 L 281.36 385.04 L 288.54 393.97 L 271.25 409.27 L 275.96 420.18 L 276.94 424.24 L 300.02 424.21 L 300.58 435.65 L 277.60 437.87 L 275.00 449.46 L 273.41 453.32 L 292.10 466.86 L 285.83 476.45 L 265.93 464.74 Z" fill="#CBBF9F" stroke="#2B2A26" stroke-width="2.5" stroke-linejoin="round" />
+  <circle cx="230.4" cy="433.3" r="36" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" />
+  <line x1="196.4" y1="433.3" x2="264.4" y2="433.3" stroke="#7E7356" stroke-width="6" />
+  <line x1="230.4" y1="399.3" x2="230.4" y2="467.3" stroke="#7E7356" stroke-width="6" />
+  <circle cx="230.4" cy="433.3" r="15" fill="#C2562F" stroke="#2B2A26" stroke-width="2" />
+  <circle cx="230.4" cy="433.3" r="6" fill="#F7F3EA" />
+</g>
+
+
+<g class="engrane-cw">
+  <path d="M 391.40 548.00 L 391.26 552.48 L 413.65 558.13 L 411.84 568.96 L 388.83 567.00 L 384.33 578.98 L 382.26 582.96 L 399.99 597.76 L 393.65 606.73 L 373.77 594.98 L 364.52 603.82 L 360.92 606.51 L 370.47 627.54 L 360.87 632.87 L 348.06 613.65 L 335.89 617.61 L 331.49 618.47 L 330.97 641.56 L 320.00 642.20 L 316.80 619.33 L 304.11 617.61 L 299.77 616.47 L 289.29 637.05 L 279.13 632.87 L 286.17 610.87 L 275.48 603.82 L 272.07 600.92 L 253.69 614.91 L 246.35 606.73 L 262.24 589.97 L 255.67 578.98 L 253.85 574.88 L 231.23 579.51 L 228.16 568.96 L 249.75 560.75 L 248.60 548.00 L 248.74 543.52 L 226.35 537.87 L 228.16 527.04 L 251.17 529.00 L 255.67 517.02 L 257.74 513.04 L 240.01 498.24 L 246.35 489.27 L 266.23 501.02 L 275.48 492.18 L 279.08 489.49 L 269.53 468.46 L 279.13 463.13 L 291.94 482.35 L 304.11 478.39 L 308.51 477.53 L 309.03 454.44 L 320.00 453.80 L 323.20 476.67 L 335.89 478.39 L 340.23 479.53 L 350.71 458.95 L 360.87 463.13 L 353.83 485.13 L 364.52 492.18 L 367.93 495.08 L 386.31 481.09 L 393.65 489.27 L 377.76 506.03 L 384.33 517.02 L 386.15 521.12 L 408.77 516.49 L 411.84 527.04 L 390.25 535.25 Z" fill="#CBBF9F" stroke="#2B2A26" stroke-width="3" stroke-linejoin="round" />
+  <circle cx="320.0" cy="548.0" r="58" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2.5" />
+  <circle cx="320.0" cy="548.0" r="46" fill="#14363A" stroke="#2B2A26" stroke-width="2" />
+  <line x1="274.0" y1="548.0" x2="366.0" y2="548.0" stroke="#CBBF9F" stroke-width="10" />
+  <line x1="320.0" y1="502.0" x2="320.0" y2="594.0" stroke="#CBBF9F" stroke-width="10" />
+  <line x1="287.0" y1="515.0" x2="353.0" y2="581.0" stroke="#CBBF9F" stroke-width="8" />
+  <line x1="287.0" y1="581.0" x2="353.0" y2="515.0" stroke="#CBBF9F" stroke-width="8" />
+  <circle cx="320.0" cy="548.0" r="22" fill="#C2562F" stroke="#2B2A26" stroke-width="2.5" />
+  <circle cx="320.0" cy="548.0" r="9" fill="#F7F3EA" stroke="#2B2A26" stroke-width="2" />
+</g>
+
+
+<g>
+  <rect x="424" y="458" width="248" height="58" rx="6" fill="#F7F3EA" stroke="#2B2A26" stroke-width="2.5" />
+  <text x="548" y="483" text-anchor="middle" font-family="Open Sans, Verdana, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="1" fill="#2B2A26">GIRAR ENGRANAJES</text>
+  <text x="548" y="503" text-anchor="middle" font-family="Open Sans, Verdana, Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="1" fill="#C2562F">ACTIVAR PRODUCCIÓN</text>
+</g>
+</svg>
