@@ -24,17 +24,33 @@ La tabla de oro es un DataFrame en formato largo con `capa`:
 
 - `curva`: puntos de las dos curvas, cada 0.5% de celdas;
 - `punto`: el valor exacto en 10% de celdas para cada criterio.
+
+Etapas (Airflow, dags/equipo_6.py):
+
+- `ingesta()`: igual que 6.relieve_5m, sobre bronze/6/huella_construida/.
+  Usa lo que ya esté en bronce o lo baja de Drive (E6_GDRIVE_HUELLA_CONSTRUIDA);
+  si no hay ninguno de los dos, reutiliza la partición vigente de
+  bronze/6/relieve_5m/ (son las mismas fuentes).
+- `plata()`:   toma la malla de plata."6.relieve_5m.malla" (si no existe, la
+  arma desde bronce) y carga sus celdas urbanas en
+  plata."6.huella_construida.celdas_urbanas".
+- `oro()`:     calcula las curvas desde plata y carga oro."6.huella_construida".
 """
 
 from __future__ import annotations
 
 import importlib.util
+import logging
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 VIZ_ID = "6.huella_construida"
+DATASET = "huella_construida"
+TABLA_PLATA = f"{VIZ_ID}.celdas_urbanas"
+log = logging.getLogger("equipo6.huella_construida")
 RESPONSABLE = "Gio Soriano"
 PASO_PCT = 0.5
 CORTE_PCT = 10.0
@@ -42,19 +58,23 @@ CRITERIOS = {"Huella": "huella_m2", "Altura": "altura_m"}
 
 
 def _relieve():
-    ruta = Path(__file__).with_name("relieve_5m.py")
-    spec = importlib.util.spec_from_file_location("relieve_5m", ruta)
-    modulo = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(modulo)
-    return modulo
+    if "e6_relieve_5m" not in sys.modules:
+        ruta = Path(__file__).with_name("relieve_5m.py")
+        spec = importlib.util.spec_from_file_location("e6_relieve_5m", ruta)
+        modulo = importlib.util.module_from_spec(spec)
+        sys.modules["e6_relieve_5m"] = modulo
+        spec.loader.exec_module(modulo)
+    return sys.modules["e6_relieve_5m"]
 
 
 relieve = _relieve()
-FUENTE_PRIMARIA = (
-    "Overture Maps Foundation: huellas de edificios (tema buildings); "
-    "INEGI: DENUE, corte de mayo de 2026, Yucatán"
+alm = relieve.alm
+# La primaria es solo Overture: el DENUE es la primaria de 6.corredor_industrial y
+# no puede repetirse como primaria dentro del equipo; aquí es secundaria.
+FUENTE_PRIMARIA = "Overture Maps Foundation: huellas de edificios (tema buildings)"
+FUENTE_SECUNDARIA = (
+    "INEGI: DENUE, corte de mayo de 2026, Yucatán; " + relieve.FUENTE_PRIMARIA
 )
-FUENTE_SECUNDARIA = relieve.FUENTE_PRIMARIA
 INSTITUCION = relieve.INSTITUCION
 
 
@@ -104,9 +124,9 @@ def construir_oro(malla: pd.DataFrame | None = None, dir_cartas: Path | None = N
             primera = sorted(Path(dir_cartas).rglob("*_ms.xyz"))[0]
             fecha_obtencion = pd.Timestamp(primera.stat().st_mtime, unit="s").date().isoformat()
     else:
+        if fecha_obtencion is None and "fecha_obtencion" in malla.columns:
+            fecha_obtencion = str(malla["fecha_obtencion"].iloc[0])
         if "capa" in malla.columns:
-            if fecha_obtencion is None:
-                fecha_obtencion = str(malla["fecha_obtencion"].iloc[0])
             malla = malla[malla["capa"] == "celda"]
 
     oro = curvas_desde_malla(malla)
@@ -132,3 +152,37 @@ def valor_referencia(oro: pd.DataFrame) -> float:
     """% de negocios en el 10% de celdas urbanas con más huella construida."""
     fila = oro[(oro["capa"] == "punto") & (oro["criterio"] == "Huella")].iloc[0]
     return round(float(fila["pct_negocios"]), 1)
+
+
+# ---------------------------------------------------------------------------
+# Etapas del DAG
+# ---------------------------------------------------------------------------
+
+def ingesta(fecha: str | None = None, carpeta_local: str | Path | None = None) -> str:
+    return relieve.ingesta_conjunto(DATASET, fecha, carpeta_local, respaldo=relieve.DATASET)
+
+
+def plata(prefijo: str | None = None) -> int:
+    """Celdas urbanas de la malla compartida -> plata."6.huella_construida.celdas_urbanas"."""
+    tabla_malla = relieve.TABLAS_PLATA["malla"]
+    # La malla compartida sirve si los crudos son los de relieve_5m (prefijo de ese
+    # conjunto o sin prefijo). Si huella_construida trae crudos propios, se rearma.
+    compartida = prefijo is None or prefijo.startswith(alm.prefijo(relieve.DATASET))
+    if compartida and alm.existe(tabla_malla, alm.ESQUEMA_PLATA):
+        log.info("Uso la malla de plata.%s", tabla_malla)
+        malla = alm.leer(tabla_malla, alm.ESQUEMA_PLATA)
+    else:
+        malla = relieve.plata_conjunto(DATASET, prefijo, respaldo=relieve.DATASET)["malla"]
+    urbanas = malla[malla["huella_m2"] >= relieve.HUELLA_MINIMA_M2]
+    columnas = ["fila", "columna", "x_utm", "y_utm", "huella_m2", "altura_m", "negocios",
+                "fecha_obtencion", "geometry"]
+    urbanas = urbanas[columnas].reset_index(drop=True)
+    alm.cargar({TABLA_PLATA: urbanas}, alm.ESQUEMA_PLATA)
+    return len(urbanas)
+
+
+def oro() -> float:
+    """plata -> oro."6.huella_construida". Devuelve la cifra que se contrasta con el catálogo."""
+    tabla = construir_oro(malla=alm.leer(TABLA_PLATA, alm.ESQUEMA_PLATA))
+    alm.cargar({VIZ_ID: tabla}, alm.ESQUEMA_ORO)
+    return valor_referencia(tabla)

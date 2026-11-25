@@ -25,17 +25,47 @@ Lo que se sabe de los crudos (verificado al descargarlos):
   ejercido que publica la fuente.
 
 La tabla de oro queda al grano año × trimestre × finalidad × dependencia (RAMO).
+
+Etapas (Airflow, dags/equipo_6.py):
+
+- `ingesta()`: descarga los tres CSV de las URLs oficiales a
+  bronze/6/gasto_publico/fecha=AAAA-MM-DD/.
+- `plata()`:   lee la partición vigente de bronce y carga
+  plata."6.gasto_publico" (los tres cortes al grano año × trimestre ×
+  finalidad × dependencia, con la columna `corte`).
+- `oro()`:     lee plata, verifica que los cortes III y IV de 2025 coincidan y
+  carga oro."6.gasto_publico".
+
+Prueba local (opcional y explícita): `ingesta(carpeta_local=...)` o la variable
+E6_CRUDOS_GASTO_PUBLICO suben una carpeta de crudos a bronce en vez de
+descargar; `construir_oro(dir_crudos)` arma el oro en memoria desde una carpeta dada.
 """
 
 from __future__ import annotations
 
 import datetime as dt
+import importlib.util
 import sys
 from pathlib import Path
 
 import pandas as pd
 
+
+def _cargar_almacen():
+    """Carga pipelines/6/_almacen.py por ruta (la carpeta "6" no es un paquete)."""
+    if "e6_almacen" not in sys.modules:
+        spec = importlib.util.spec_from_file_location("e6_almacen", Path(__file__).with_name("_almacen.py"))
+        modulo = importlib.util.module_from_spec(spec)
+        sys.modules["e6_almacen"] = modulo
+        spec.loader.exec_module(modulo)
+    return sys.modules["e6_almacen"]
+
+
+alm = _cargar_almacen()
+
 VIZ_ID = "6.gasto_publico"
+DATASET = "gasto_publico"
+TABLA_PLATA = VIZ_ID
 
 URL_BASE = "https://www.yucatan.gob.mx/docs/transparencia/datos_abiertos/"
 ARCHIVOS = {
@@ -126,29 +156,40 @@ def _agrupar(df: pd.DataFrame) -> pd.DataFrame:
     return g
 
 
-def verificar_cortes(t3: pd.DataFrame, t4: pd.DataFrame, tolerancia: float = 0.01) -> None:
+def verificar_cortes(plata: pd.DataFrame, tolerancia: float = 0.01) -> None:
     """Los trimestres I a III de 2025 deben ser iguales en el corte III y en el IV."""
-    a = t3[t3["trimestre"] < 4].groupby(["trimestre", "finalidad"])["EJERCIDO"].sum()
-    b = t4[t4["trimestre"] < 4].groupby(["trimestre", "finalidad"])["EJERCIDO"].sum()
-    dif = (a - b).abs().max()
-    if dif > tolerancia:
+    def suma(corte):
+        d = plata[(plata["corte"] == corte) & (plata["trimestre"] < 4)]
+        return d.groupby(["trimestre", "finalidad"])["ejercido_mdp"].sum()
+
+    dif = (suma("2025_t3") - suma("2025_t4")).abs().max()
+    if pd.isna(dif) or dif > tolerancia:
         raise ValueError(f"Los cortes III y IV de 2025 difieren hasta {dif:.2f} mdp")
 
 
-def construir_oro(dir_crudos: Path, fecha_obtencion: str | None = None) -> pd.DataFrame:
-    """Lee los tres crudos y devuelve la tabla de oro de 6.gasto_publico."""
+def construir_plata(dir_crudos: Path, fecha_obtencion: str | None = None) -> pd.DataFrame:
+    """Los tres cortes, limpios y agregados al grano de la figura, con la columna `corte`."""
     dir_crudos = Path(dir_crudos)
-    t4_2025 = leer_crudo(dir_crudos / ARCHIVOS["2025_t4"])
-    t3_2025 = leer_crudo(dir_crudos / ARCHIVOS["2025_t3"])
-    t4_2024 = leer_crudo(dir_crudos / ARCHIVOS["2024_t4"])
-    verificar_cortes(t3_2025, t4_2025)
-
-    oro = pd.concat([_agrupar(t4_2024), _agrupar(t4_2025)], ignore_index=True)
-    oro["ejercido_mdp"] = oro["ejercido_mdp"].round(6)
-
+    partes = []
+    for corte, archivo in ARCHIVOS.items():
+        g = _agrupar(leer_crudo(dir_crudos / archivo))
+        g.insert(0, "corte", corte)
+        partes.append(g)
     if fecha_obtencion is None:
         mtime = (dir_crudos / ARCHIVOS["2025_t4"]).stat().st_mtime
         fecha_obtencion = dt.date.fromtimestamp(mtime).isoformat()
+    plata = pd.concat(partes, ignore_index=True)
+    plata["fecha_obtencion"] = fecha_obtencion
+    return plata
+
+
+def oro_desde_plata(plata: pd.DataFrame) -> pd.DataFrame:
+    """Tabla de oro a partir de plata."6.gasto_publico"."""
+    verificar_cortes(plata)
+    fecha_obtencion = str(plata["fecha_obtencion"].iloc[0])
+    oro = plata[plata["corte"].isin(["2024_t4", "2025_t4"])].drop(columns=["corte", "fecha_obtencion"])
+    oro = oro.reset_index(drop=True)
+    oro["ejercido_mdp"] = oro["ejercido_mdp"].round(6)
 
     oro.insert(0, "viz_id", VIZ_ID)
     oro["fuente_primaria"] = FUENTE_PRIMARIA
@@ -157,6 +198,11 @@ def construir_oro(dir_crudos: Path, fecha_obtencion: str | None = None) -> pd.Da
     oro["fecha_obtencion"] = fecha_obtencion
     oro["responsable"] = RESPONSABLE
     return oro.sort_values(["anio", "trimestre", "finalidad", "dependencia"]).reset_index(drop=True)
+
+
+def construir_oro(dir_crudos: Path, fecha_obtencion: str | None = None) -> pd.DataFrame:
+    """Prueba local: crudos -> plata -> oro en memoria."""
+    return oro_desde_plata(construir_plata(dir_crudos, fecha_obtencion))
 
 
 def resumen_fomento(oro: pd.DataFrame) -> pd.DataFrame:
@@ -175,10 +221,45 @@ def valor_referencia(oro: pd.DataFrame, anio: int = 2025) -> float:
     return float(resumen_fomento(oro).loc[anio, "porcentaje"])
 
 
+# ---------------------------------------------------------------------------
+# Etapas del DAG
+# ---------------------------------------------------------------------------
+
+def ingesta(fecha: str | None = None, carpeta_local: str | Path | None = None) -> str:
+    """Fuentes con enlace directo -> bronce.
+
+    Si se da una carpeta de crudos (argumento o E6_CRUDOS_GASTO_PUBLICO), se sube
+    esa carpeta y solo se descarga lo que le falte.
+    """
+    urls = {ARCHIVOS[k]: URLS[k] for k in ARCHIVOS}
+    local = alm.carpeta_local(DATASET, carpeta_local)
+    if local is None:
+        return alm.ingestar_urls(DATASET, urls, fecha)
+    destino = alm.ingestar_carpeta_local(DATASET, local, fecha)
+    alm.completar_urls(destino, urls)
+    return destino
+
+
+def plata(prefijo: str | None = None) -> int:
+    """Bronce -> plata."6.gasto_publico"."""
+    with alm.crudos(DATASET, prefijo) as (carpeta, fecha):
+        tabla = construir_plata(carpeta, fecha)
+    alm.cargar({TABLA_PLATA: tabla}, alm.ESQUEMA_PLATA)
+    return len(tabla)
+
+
+def oro() -> float:
+    """plata -> oro."6.gasto_publico". Devuelve la cifra que se contrasta con el catálogo."""
+    tabla = oro_desde_plata(alm.leer(TABLA_PLATA, alm.ESQUEMA_PLATA))
+    alm.cargar({VIZ_ID: tabla}, alm.ESQUEMA_ORO)
+    return valor_referencia(tabla)
+
+
 if __name__ == "__main__":
-    raiz = Path(__file__).resolve().parents[2]
-    crudos = Path(sys.argv[1]) if len(sys.argv) > 1 else raiz / "local_avances/datos_crudos/gasto_publico"
-    tabla = construir_oro(crudos)
+    # Prueba local explícita: python pipelines/6/gasto_publico.py <carpeta_de_crudos>
+    if len(sys.argv) < 2:
+        sys.exit("Uso: gasto_publico.py <carpeta_de_crudos>  (en producción corre el DAG equipo_6)")
+    tabla = construir_oro(Path(sys.argv[1]))
     print(tabla.head())
     print(resumen_fomento(tabla))
     print("valor_referencia:", valor_referencia(tabla))

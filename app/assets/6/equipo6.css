@@ -130,7 +130,7 @@ body:has(.e6) { margin: 0; background: #F7F3EA; }
   100% { transform: scale(2.6); opacity: 0; }
 }
 
-/* Rótulo tipo cartel, como en los bocetos */
+/* Rótulo tipo cartel */
 .e6-cartel {
   position: absolute;
   z-index: 4;
