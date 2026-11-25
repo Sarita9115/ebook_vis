@@ -1,45 +1,66 @@
 equipo,subtema,viz_id,papel,enlace,valor_referencia,tolerancia,streaming,estado
-1,"Gobierno universitario y cambios de rectoría",1.gobierno_universitario,,,,,,pendiente
-1,"Trayectoria estudiantil",1.trayectoria_estudiantil,,,,,,pendiente
-1,"Financiamiento e infraestructura",1.financiamiento_infraestructura,,,,,,pendiente
-1,"Carreras, modalidades y acreditaciones",1.carreras_modalidades,,,,,,pendiente
+1,"Gobierno universitario y cambios de rectoría",1.gobierno_universitario,primaria,https://www.yucatan.gob.mx/docs/directorio/upy_590.pdf,Organigrama UPY: última actualización 01/01/2024; identifica a Alfredo Martín Ulibarri Benítez como rector.,0 (dato documental),no,validado_con_alcance
+1,"Gobierno universitario y cambios de rectoría",1.gobierno_universitario,secundaria,https://www.upy.edu.mx/_files/ugd/c6cbd8_01c9facbb29f4b348855ffab11038ca2.pdf,Manual de Control Interno fechado en julio de 2018; registra a Gildardo Sánchez Ante como rector.,0 (dato documental),no,validado_con_alcance
+1,"Gobierno universitario y cambios de rectoría",1.gobierno_universitario,secundaria,https://www.upy.edu.mx/_files/ugd/c6cbd8_a190fe687d2a4b85a308df53cf643ce4.pdf,Manual de Organización General UPY; documento generado el 20/10/2021 e identifica a Víctor Eduardo Espadas Aldana como titular.,0 (dato documental),no,validado_con_alcance
+1,"Gobierno universitario y cambios de rectoría",1.gobierno_universitario,secundaria,https://www.yucatan.gob.mx/gobierno/detalle.php?id_d=78,Directorio estatal consultado el 22/11/2026; identifica a Raúl Aarón Rosado Castillo como rector. La fecha de consulta no es fecha de nombramiento.,0 (dato documental),no,validado_con_alcance
+1,"Gobierno universitario y cambios de rectoría",1.gobierno_universitario,secundaria,https://www.yucatan.gob.mx/docs/transparencia/informes_paraestatales/2026/1er_periodo/TVI_48_00.pdf,Notas a estados financieros: decreto 337/2016 publicado el 28/01/2016; UPY constituida como organismo público descentralizado.,0 (dato documental),no,validado
+1,"Trayectoria estudiantil",1.trayectoria_estudiantil,primaria,https://www.economia.gob.mx/datamexico/es/profile/institution/universidad-politecnica-de-yucatan,"2022: 481 matriculados; 62 egresados; 241 Robótica, 142 Datos, 98 Sistemas Embebidos; 389 hombres y 92 mujeres.",0 estudiantes,no,validado
+1,"Trayectoria estudiantil",1.trayectoria_estudiantil,secundaria,https://ciencia.yucatan.gob.mx/wp-content/uploads/2024/01/67_compressed.pdf,"Gaceta SIIDETEY/SIIES, 2023: matrícula reportada como actual de 530 alumnos.",0 estudiantes,no,validado_con_alcance
+1,"Financiamiento e infraestructura",1.financiamiento_infraestructura,primaria,https://www.yucatan.gob.mx/docs/transparencia/informes_paraestatales/2026/1er_periodo/TVI_48_00.pdf,"1T 2025/2026: ingresos de gestión $6,682,191.46/$1,017,270.25; transferencias $25,828,042.86/$4,159,677.00; gastos totales $52,524,695.18/$10,151,311.39. Activos al 31/03/2026: inmuebles e infraestructura $115,042,865.47.",0.01 MXN,no,validado
+1,"Financiamiento e infraestructura",1.financiamiento_infraestructura,secundaria,https://asey.gob.mx/web/InformesPDF/CP2024/INFORME_2024_UPY.pdf,Informe individual de auditoría de la Cuenta Pública 2024 de la UPY; revisión de ingresos propios y observaciones financieras.,No aplica (contexto de auditoría),no,validado
+1,"Carreras, modalidades y acreditaciones",1.carreras_modalidades,primaria,https://www.upy.edu.mx/carreras-profesionales,Portal institucional: cuatro programas profesionales y cuatro rutas de doble titulación TSU + Ingeniería.,0 programas,no,validado
+1,"Carreras, modalidades y acreditaciones",1.carreras_modalidades,secundaria,https://www.upy.edu.mx/post/ciees-acredita-la-ingenier%C3%ADa-en-rob%C3%B3tica-computacional-de-la-upy,Publicación institucional del 13/01/2023: acreditación CIEES del programa de Ingeniería en Robótica Computacional.,0 (dato documental),no,validado
+1,"Carreras, modalidades y acreditaciones",1.carreras_modalidades,secundaria,https://www.upy.edu.mx/post/la-upy-lanza-programa-educativo-de-ingenier%C3%ADa-en-ciberseguridad,Publicación del 15/03/2022: apertura de Ingeniería en Ciberseguridad para el ciclo 2022-2023.,0 (dato documental),no,validado
+1,"Carreras, modalidades y acreditaciones",1.carreras_modalidades,secundaria,https://www.university.upy.edu.mx/ciberseguridad,Ficha institucional anuncia modalidad mixta; el mismo contenido también muestra formato presencial. Se registra la discrepancia.,No aplica (dato cualitativo),no,validado_con_alcance
 1,"Investigación e innovación aplicada",1.investigacion_aplicada,,,,,,pendiente
 1,"Vinculación con la industria y empleo",1.vinculacion_empleo,,,,,,pendiente
-1,"Movilidad y colaboración internacional",1.movilidad_internacional,,,,,,pendiente
-1,"Participación estudiantil y comunidad",1.participacion_estudiantil,,,,,,pendiente
-2,"Dónde se cuida la península",2.donde_se_cuida
-primaria: https://gaia.inegi.org.mx/wscatgeo/v2/geo/mgem/31
-2,"Yucatán, al lado de sus reservas",2.yucatan_reservas
-primari: https://sds.yucatan.gob.mx/areas-naturales/sanpy.php
-secundaria: https://datos.yucatan.gob.mx/storage/boletines/archivos/2026/Boletin_2026_03.pdf
-2,"Herbario CICY, plantas vasculares",2.herbario_cicy,,,,,,pendiente
-2,"La fauna de la península, en tu espacio",2.fauna_nom059
-primaria,https://static.poly.pizza/4866ebc9-2633-4356-b1e7-b74627e5cbd4.glb,988,0,no,figura lista; falta validar
-primaria,https://static.poly.pizza/6a03a835-2d9e-4694-8ab0-f308a22724c0.glb,652,0,no,figura lista; falta validar
-secundaria,https://www.profepa.gob.mx/innovaportal/file/435/1/NOM_059_SEMARNAT_2010.pdf,"Jaguar (Panthera onca) y manatí (Trichechus manatus): En peligro de extinción (P) en la NOM-059-SEMARNAT-2010.",0 (dato documental),no,figura lista; falta validar
-2,"Unidades económicas de impacto ambiental o relación con la biodiversidad",2.unidades_en_reservas,,,,,,pendiente
-2,"Impacto por municipio ocasionado por la cría de cerdo en la península",2.cria_de_cerdo,,,,,,pendiente
-2,"Cada tipo de negocio situado en cada reserva natural",2.negocios_en_reservas,,,,,,pendiente
-2,"Los ecosistemas que protege la península"
-
-primaria,https://www.datos.gob.mx/dataset/informacion_monitoreo_evaluacion_para_conservacion/resource/fd923799-1d5b-4a34-91f7-f66d7440a118,40,0,no,validado_con_alcance
-secundaria,https://historico.datos.gob.mx/busca/dataset/simec/resource/489f051b-8d8a-4d86-8c00-7f03949e70dd,"Calakmul: 723,185 ha en SIMEC frente a 728,909 ha en el CSV de CONANP. El CSV trae 3 ANP más que SIMEC (Chunyaxché, Felipe Carrillo Puerto, Arrecifes del Golfo de México-Sur). Se registra la discrepancia.",No aplica (contexto de contraste),no,validado_con_alcance
-
+1,"Movilidad y colaboración internacional",1.movilidad_internacional,primaria,https://yucatan-initiative.tamu.edu/new-university-yucatan-hosts-engineering-students,24,0,no,figura lista; falta validar
+1,"Movilidad y colaboración internacional",1.movilidad_internacional,secundaria,https://www.posta.com.mx/mexico/jovenes-yucatecos-participan-en-campamento-de-ciberseguridad-en-gales/vl1602446,10,0,no,figura lista; falta validar
+1,"Participación estudiantil y comunidad",1.participacion_estudiantil,primaria,https://www.yucatan.com.mx/yucatan/2026/08/10/llevan-ciencia-y-robotica-a-ucu.html,23,0,no,figura lista; falta validar
+1,"Participación estudiantil y comunidad",1.participacion_estudiantil,secundaria,https://ciencia.yucatan.gob.mx/wp-content/uploads/2025/11/Ganadores-robotica-2025.pdf,,0,no,figura lista; falta validar
+2,"Dónde se cuida la península",2.donde_se_cuida,primaria,https://gaia.inegi.org.mx/wscatgeo/v2/geo/mgem/31,,,,
+2,"Yucatán, al lado de sus reservas",2.yucatan_reservas,primaria,https://sds.yucatan.gob.mx/areas-naturales/sanpy.php,,,,
+2,"Yucatán, al lado de sus reservas",2.yucatan_reservas,secundaria,https://datos.yucatan.gob.mx/storage/boletines/archivos/2026/Boletin_2026_03.pdf,,,,
+2,"Herbario CICY, plantas vasculares",2.herbario_cicy,primaria,http://datos.cicy.mx/?q=node/70/dataset/download,15067,0,no,borrador
+2,"Herbario CICY, plantas vasculares",2.herbario_cicy,secundaria,https://www.dof.gob.mx/nota_detalle.php?codigo=5173091&fecha=30/12/2010,,,no,borrador
+2,"Herbario CICY, plantas vasculares",2.herbario_cicy,secundaria,https://www.inegi.org.mx/programas/ca/2022/#tabulados,,,no,borrador
+2,"Herbario CICY, plantas vasculares",2.herbario_cicy,secundaria,https://www.inegi.org.mx/servicios/api_denue.html,,,no,borrador
+2,"La fauna de la península, en tu espacio",2.fauna_nom059,primaria,https://static.poly.pizza/4866ebc9-2633-4356-b1e7-b74627e5cbd4.glb,988,0,no,figura lista; falta validar
+2,"La fauna de la península, en tu espacio",2.fauna_nom059,primaria,https://static.poly.pizza/6a03a835-2d9e-4694-8ab0-f308a22724c0.glb,652,0,no,figura lista; falta validar
+2,"La fauna de la península, en tu espacio",2.fauna_nom059,secundaria,https://www.profepa.gob.mx/innovaportal/file/435/1/NOM_059_SEMARNAT_2010.pdf,"Jaguar (Panthera onca) y manatí (Trichechus manatus): En peligro de extinción (P) en la NOM-059-SEMARNAT-2010.",0 (dato documental),no,figura lista; falta validar
+2,"Unidades económicas de impacto ambiental o relación con la biodiversidad",2.unidades_en_reservas,primaria,http://sig.conanp.gob.mx/website/pagsig/info_shape.htm,1456,0.01,no,borrador
+2,"Unidades económicas de impacto ambiental o relación con la biodiversidad",2.unidades_en_reservas,secundaria,https://www.inegi.org.mx/servicios/api_denue.html,,,no,borrador
+2,"Impacto por municipio ocasionado por la cría de cerdo en la península",2.cria_de_cerdo,primaria,https://www.inegi.org.mx/programas/ca/2022/#tabulados,1696764,0.001,no,borrador
+2,"Impacto por municipio ocasionado por la cría de cerdo en la península",2.cria_de_cerdo,secundaria,http://sig.conanp.gob.mx/website/pagsig/info_shape.htm,,,no,borrador
+2,"Cada tipo de negocio situado en cada reserva natural",2.negocios_en_reservas,primaria,https://www.inegi.org.mx/servicios/api_denue.html,4625,0.01,no,borrador
+2,"Cada tipo de negocio situado en cada reserva natural",2.negocios_en_reservas,secundaria,http://sig.conanp.gob.mx/website/pagsig/info_shape.htm,,,no,borrador
+2,"Los ecosistemas que protege la península",2.ecosistemas,primaria,https://www.datos.gob.mx/dataset/informacion_monitoreo_evaluacion_para_conservacion/resource/fd923799-1d5b-4a34-91f7-f66d7440a118,40,0,no,validado_con_alcance
+2,"Los ecosistemas que protege la península",2.ecosistemas,secundaria,https://historico.datos.gob.mx/busca/dataset/simec/resource/489f051b-8d8a-4d86-8c00-7f03949e70dd,"Calakmul: 723,185 ha en SIMEC frente a 728,909 ha en el CSV de CONANP. El CSV trae 3 ANP más que SIMEC (Chunyaxché, Felipe Carrillo Puerto, Arrecifes del Golfo de México-Sur). Se registra la discrepancia.",No aplica (contexto de contraste),no,validado_con_alcance
 3,"Crecimiento poblacional y densidad territorial",3.crecimiento_densidad,,,,,,pendiente
 3,"Ranking porcentual del crecimiento poblacional de los estados de México",3.ranking_crecimiento,,,,,,pendiente
-3,"Natalidad y crecimiento poblacional de los municipios de Yucatán",3.natalidad,,,,,,pendiente
+3,"Natalidad y crecimiento poblacional de los municipios de Yucatán",3.natalidad,primaria,https://riisp.insp.mx/nada/files_nesstar/SINAC_Nacimientos/base/Base_Sinac_2008_2023.zip,,,no,pendiente
+3,"Natalidad y crecimiento poblacional de los municipios de Yucatán",3.natalidad,secundaria,https://www.geoboundaries.org/api/current/gbOpen/MEX/ADM2/,,,no,pendiente
 3,"Municipios con mayor concentración de población joven",3.poblacion_joven,,,,,,pendiente
 3,"Expansión urbana en Mérida",3.expansion_merida,,,,,,pendiente
 3,"Comparativa de población alfabetizada en los municipios de Yucatán",3.alfabetizacion,,,,,,pendiente
-3,"Evolución de la población con educación superior",3.educacion_superior,,,,,,pendiente
-3,"Disponibilidad de instituciones educativas en Yucatán",3.instituciones_educativas,,,,,,pendiente
-4,"Inversión extranjera directa (IED) en Yucatán por país de origen",4.ied_por_pais,,,,,,pendiente
-4,"Unidades económicas, empleo y producción en Yucatán (Censos Económicos 2019 y 2024)",4.censos_economicos,,,,,,pendiente
+3,"Evolución de la población con educación superior",3.educacion_superior,primaria,,79353,0,no,figura lista; falta validar
+3,"Evolución de la población con educación superior",3.educacion_superior,secundaria,https://anuario.anuies.mx/index.php,93345,0,no,figura lista; falta validar
+3,"Disponibilidad de instituciones educativas en Yucatán",3.instituciones_educativas,primaria,https://www.inegi.org.mx/app/descarga/?ti=6,1145,0,no,figura lista; falta validar
+3,"Disponibilidad de instituciones educativas en Yucatán",3.instituciones_educativas,secundaria,,1689,0,no,figura lista; falta validar
+4,"Inversión extranjera directa (IED) en Yucatán por país de origen",4.ied_por_pais,primaria,https://repodatos.atdt.gob.mx/api_update/secretaria_economia/inversion_extranjera_directa/b2026_01t_act_ef_origen.csv,1596.3,0.1,no,borrador
+4,"Inversión extranjera directa (IED) en Yucatán por país de origen",4.ied_por_pais,secundaria,https://ventanillaunica.economia.gob.mx/media/4T2025_Yucat%C3%A1n.pdf,,,no,borrador
+4,"Unidades económicas, empleo y producción en Yucatán (Censos Económicos 2019 y 2024)",4.censos_economicos,primaria,https://www.inegi.org.mx/contenidos/programas/ce/2024/datosabiertos/conjunto_de_datos_ce_yuc_2024_csv.zip,130438,0,no,borrador
+4,"Unidades económicas, empleo y producción en Yucatán (Censos Económicos 2019 y 2024)",4.censos_economicos,secundaria,https://www.inegi.org.mx/contenidos/programas/ce/2019/Datosabiertos/ce2019_yuc_csv.zip,112503,0,no,borrador
 4,"El pulso de la inversión extranjera: ritmo de la IED en Yucatán (2020-2025)",4.pulso_ied,,,,,,pendiente
 4,"Promesa contra resultado: empleos anunciados y empleo formal en el IMSS",4.promesa_resultado,,,,,,pendiente
 4,"Sobres contra maletines: remesas e inversión extranjera en Yucatán (2020-2025)",4.remesas_ied,,,,,,pendiente
-4,"IED hacia Yucatán por año, ranking y origen (2018-2025)",4.ied_ranking_origen,,,,,,pendiente
-4,"Turismo y derrama económica",4.turismo_derrama,,,,,,pendiente
+4,"IED hacia Yucatán por año, ranking y origen (2018-2025)",4.ied_ranking_origen,primaria,,108.1,0.05,no,pendiente
+4,"IED hacia Yucatán por año, ranking y origen (2018-2025)",4.ied_ranking_origen,secundaria,,,,no,pendiente
+4,"IED hacia Yucatán por año, ranking y origen (2018-2025)",4.ied_ranking_origen,secundaria,,,,no,pendiente
+4,"Turismo y derrama económica",4.turismo_derrama,primaria,,5383,0.5,no,pendiente
+4,"Turismo y derrama económica",4.turismo_derrama,secundaria,,,,no,pendiente
+4,"Turismo y derrama económica",4.turismo_derrama,secundaria,,,,no,pendiente
+4,"Turismo y derrama económica",4.turismo_derrama,secundaria,,,,no,pendiente
 4,"Efecto económico de la apertura al exterior",4.apertura_exterior,,,,,,pendiente
 5,"Treinta años aprendiendo",5.treinta_anos,,,,,,pendiente
 5,"La respuesta",5.la_respuesta,,,,,,pendiente
@@ -49,12 +70,21 @@ secundaria,https://historico.datos.gob.mx/busca/dataset/simec/resource/489f051b-
 5,"El entorno de la escuela",5.entorno_escuela,,,,,,pendiente
 5,"Las metas del estado",5.metas_estado,,,,,,pendiente
 5,"La geografía de la dispersión",5.geografia_dispersion,,,,,,pendiente
-6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,,,,,,pendiente
-6,"Aporte del sector empresarial al PIB estatal y regional",6.aporte_pib,,,,,,pendiente
-6,"Atracción de capital, empleo y evolución de las unidades económicas en Yucatán",6.atraccion_capital,,,,,,pendiente
-6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,,,,,,pendiente
-6,"Gasto público estatal y fomento económico: hacia dónde va el presupuesto de Yucatán",6.gasto_publico,,,,,,pendiente
-6,"Cambio de uso del suelo y expansión urbana en Yucatán y la zona metropolitana de Mérida",6.cambio_suelo,,,,,,pendiente
-6,"Concentración industrial en el corredor Mérida, Umán y Hunucmá",6.corredor_industrial,,,,,,pendiente
-6,"Relieve y altura edificada de la zona metropolitana de Mérida vistos desde modelos de elevación de 5 m",6.relieve_5m,,,,,,pendiente
-6,"Huella construida, altura y densidad empresarial de Mérida",6.huella_construida,,,,,,pendiente
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,primaria,https://www.inegi.org.mx/app/descarga/?ti=6,,,no,borrador
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_31.xlsx,,,no,borrador
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_04.xlsx,,,no,borrador
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_23.xlsx,,,no,borrador
+6,"Distribución y densidad nacional de unidades económicas",6.densidad_unidades,secundaria,https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson,,,no,borrador
+6,"Aporte del sector empresarial al PIB estatal y regional",6.aporte_pib,primaria,https://www.inegi.org.mx/programas/pibent/2018/#tabulados,1164.315,0.001,no,borrador
+6,"Aporte del sector empresarial al PIB estatal y regional",6.aporte_pib,secundaria,https://www.inegi.org.mx/app/descarga/?ti=6,,,no,borrador
+6,"Atracción de capital, empleo y evolución de las unidades económicas en Yucatán",6.atraccion_capital,primaria,https://www.datos.gob.mx/dataset/inversion_extranjera_directa,,,no,borrador
+6,"Atracción de capital, empleo y evolución de las unidades económicas en Yucatán",6.atraccion_capital,secundaria,https://www.inegi.org.mx/app/descarga/?ti=6,,,no,borrador
+6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,primaria,https://ssop.yucatan.gob.mx/mapaobras,,,no,borrador
+6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_31.xlsx,,,no,borrador
+6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,secundaria,https://www.inegi.org.mx/temas/mg/#Descargas,,,no,borrador
+6,"Obra pública e infraestructura para el desarrollo económico por municipio",6.obra_publica,secundaria,https://www.inegi.org.mx/app/indicesdeprecios/Estructura.aspx?idEstructura=112001700030&T=%C3%8Dndices+de+Precios+al+Consumidor&ST=INPC+Nacional+%28mensual%29,,,no,borrador
+6,"Gasto público estatal y fomento económico: hacia dónde va el presupuesto de Yucatán",6.gasto_publico,primaria,https://www.yucatan.gob.mx/docs/transparencia/datos_abiertos/2025/Datos_abiertos_triemstre_4_2025.csv,7.78,0.05,no,pendiente
+6,"Cambio de uso del suelo y expansión urbana en Yucatán y la zona metropolitana de Mérida",6.cambio_suelo,primaria,http://www.conabio.gob.mx/informacion/gis/maps/geo/usv250s7gw.zip,75.95,1.0,no,pendiente
+6,"Concentración industrial en el corredor Mérida, Umán y Hunucmá",6.corredor_industrial,primaria,https://www.inegi.org.mx/contenidos/masiva/denue/denue_31_csv.zip,72.7,1.0,no,pendiente
+6,"Relieve y altura edificada de la zona metropolitana de Mérida vistos desde modelos de elevación de 5 m",6.relieve_5m,primaria,https://www.inegi.org.mx/app/geo2/elevacionesmex/,93.1,1.0,no,pendiente
+6,"Huella construida, altura y densidad empresarial de Mérida",6.huella_construida,primaria,https://docs.overturemaps.org/guides/buildings/,18.7,1.0,no,pendiente

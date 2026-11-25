@@ -26,7 +26,7 @@ ebook_vis/
 
 | Carpeta | Quién la escribe | Qué hay dentro |
 | --- | --- | --- |
-| `figures/` | Quien hace la gráfica | La función que construye el `go.Figure`. La web y el PDF importan esta función. |
+| `figures/` | Producción | La función que construye el `go.Figure`. La web y el PDF importan esta función. |
 | `app/pages/` | Producción, con la plantilla | La página de la aplicación. No redibuja la figura: la importa de `figures/`. |
 | `pipelines/` | Producción | La limpieza que deja la tabla de oro de cada subtema. |
 | `dags/` | Producción | Un proceso por equipo: ingesta, plata, oro, validación y catálogo. |
@@ -34,9 +34,73 @@ ebook_vis/
 | `ebook/` | Producción | El libro. Exporta la misma función de `figures/` a imagen. |
 | `docs/` | Producción | Los dos documentos de acuerdo. Aquí no van gráficas. |
 
-Los archivos crudos no viven en este repositorio. Mientras no exista el datalake, se quedan en la carpeta de Drive del curso, separados por equipo y por conjunto. La gráfica no apunta a esa carpeta: recibe la tabla preparada en `datos`. Cuando MinIO y PostgreSQL estén en Docker, esa misma tabla sale de oro y la función no cambia de ruta.
+Los archivos crudos no viven en este repositorio. La copia compartida está en la carpeta de Drive del curso. Producción los deposita en MinIO y, a partir de ahí, el código solo habla con MinIO y con PostgreSQL. La figura recibe la tabla de oro en el argumento `datos`.
 
-## Dónde va tu archivo
+## Del archivo crudo a la figura
+
+Hay tres piezas distintas. El pipeline prepara la tabla. El DAG la manda a correr. La figura solo dibuja. Las tres siguen la estructura de este repositorio y los acuerdos de [docs/requerimientos-del-cliente.md](docs/requerimientos-del-cliente.md) y [docs/arquitectura-propuesta.md](docs/arquitectura-propuesta.md).
+
+### Regla para Producción
+
+Quien integra un subtema lo deja funcionando por ese pipeline. El código de `pipelines/`, `dags/` y `app/pages/` no lleva rutas de una máquina: ni `datos/`, ni una carpeta de Drive, ni `local_avances/`, ni una ruta absoluta. Drive solo sirve para recibir el archivo. Producción lo sube al prefijo de bronce del equipo y el DAG hace el resto.
+
+Para dar por cerrada una visualización tienen que cumplirse las cuatro cosas:
+
+1. `pipelines/{equipo}/` tiene ingesta, plata y oro. La ingesta lee el bronce en MinIO, o descarga la fuente y la deja ahí. Plata lee bronce y escribe en el esquema `plata`. Oro lee plata y escribe en el esquema `oro`.
+2. `dags/equipo_{n}.py` llama esas funciones, en el orden de la arquitectura: ingesta, plata, oro, validación y catálogo. Una tarea vacía no cuenta como proceso.
+3. La página importa `figura` desde `figures/{equipo}/{subtema}/figura.py` y le pasa la tabla `oro."<viz_id>"`. La figura no abre archivos ni bases de datos.
+4. La cifra, las fuentes y el valor de referencia quedan en `catalog/catalog.csv` y pasan la validación descrita en la arquitectura.
+
+Una tabla armada a mano, un parquet de prueba o una función que abre una carpeta local puede servir para revisar la gráfica en tu máquina. No es la entrega. Al correr el DAG con Docker, en una máquina que no tenga esa carpeta, la misma figura tiene que salir de oro.
+
+### Qué es un pipeline
+
+El pipeline es el código de `pipelines/{equipo}/`. Limpia y publica. No dibuja.
+
+Son tres pasos, siempre en este orden. Cada uno deja el resultado en un lugar distinto.
+
+1. **Ingesta.** Copia el archivo crudo, sin transformarlo, a MinIO, bucket `bronze`, en `bronze/{equipo}/{dataset}/fecha=AAAA-MM-DD/`. La función se llama `ingerir()`. Una fuente que solo existe como enlace no se sube a mano: esta función la descarga y la deja en ese prefijo, con la fecha de obtención.
+2. **Plata.** Lee ese bronce, limpia tipos, nombres y textos, y escribe tablas en PostgreSQL, esquema `plata`. La función se llama `construir()`, en `pipelines/{equipo}/plata.py`. El ráster se queda como COG en MinIO; en PostgreSQL solo quedan su ruta y sus metadatos.
+3. **Oro.** Lee plata y deja una tabla por subtema en el esquema `oro`. El nombre de la tabla es el `viz_id`, por ejemplo `oro."4.ied_por_pais"`. `construir()` las publica todas. `leer(viz_id)` lee una. La página y el PDF leen esta tabla.
+
+Lo restringido va al bucket `bronze-restringido`, con la misma forma de ruta. El ráster va al bucket `raster`. Las tablas de las figuras viven en la base `vis`. Airflow usa otra base, `airflow`, en el mismo PostgreSQL: ahí guarda sus corridas, no los datos de las gráficas.
+
+Hoy solo el equipo 4 tiene `ingerir()` y `construir()`, en `pipelines/4/`. Esa ingesta todavía lee `datos/4/` y escribe `bronze/4/<archivo>`, sin la partición `dataset/fecha=` de la arquitectura: hay que alinearla. Los equipos 1, 2, 3 y 6 arman la tabla con una función que abre una carpeta local. El equipo 5 todavía no tiene `pipelines/5/`. Esas funciones locales son el trabajo pendiente de Producción, no el camino a seguir.
+
+### Qué es un DAG y dónde entra
+
+Un DAG es el proceso que Airflow ejecuta para un equipo. El archivo es `dags/equipo_{n}.py` y dentro de Airflow se llama `equipo_{n}`. No guarda datos: llama a los scripts del pipeline, en el orden de la arquitectura.
+
+```text
+ingesta → plata → oro → validacion → catalogo
+```
+
+Con `docker compose up`, Airflow monta `dags/` en `/opt/airflow/dags` y `pipelines/` en `/opt/airflow/pipelines`. La interfaz queda en http://localhost:8080, usuario `admin`. Disparar `equipo_4` corre `ingerir()` y después `construir()` de plata y de oro, cada una en un entorno virtual propio (Airflow trae SQLAlchemy 1.4 y los pipelines usan la 2). `validacion` y `catalogo` siguen vacías.
+
+`equipo_1.py`, `equipo_2.py`, `equipo_3.py`, `equipo_5.py` y `equipo_6.py` tienen la misma cadena, pero cada tarea está vacía. Airflow la marca terminada y no lee archivos. Dejarlas así no publica la figura. Producción las conecta a las funciones del pipeline de ese equipo.
+
+### Dónde se conecta cada ruta
+
+Estas son las rutas del proceso. El código las usa tal cual; no las sustituye por una carpeta de tu máquina.
+
+| Qué | Ruta |
+| --- | --- |
+| Copia compartida, antes de entrar al proceso | Carpeta de Drive del curso. Producción la sube a bronce. El código no la abre. |
+| Bronce | MinIO, `bronze/{equipo}/{dataset}/fecha=AAAA-MM-DD/`. |
+| Plata y oro | PostgreSQL, base `vis`, tablas `plata."<nombre>"` y `oro."<viz_id>"`. |
+| Figura | `figures/{equipo}/{subtema}/figura.py`, función `figura(datos)`. `datos` es la tabla de oro. |
+| Página | `app/pages/{equipo}/`. Importa `figura` y le pasa `oro."<viz_id>"`. |
+| Menú | `/`, en `app/pages/inicio.py`. Los capítulos y el destino de cada vínculo están en `app/recorrido.py`. |
+| Subtema sin página | `/v/{equipo}/{subtema}`, la ficha de `app/pages/subtema.py`. El vínculo ya existe; la figura todavía no. |
+
+El PDF importa la misma `figura(datos)`. No tiene ruta en la web. Dash y Quarto leen el esquema `oro`; no leen bronce ni una carpeta local.
+
+Lo que hoy está montado, y lo que todavía se sale de estas rutas:
+
+- `/4` (`app/pages/4/historia.py`) llama a `pipelines/4/oro.py` → `leer("4.<subtema>")` y pasa esa tabla a `figura`. La ingesta de ese equipo aún parte de `datos/4/`.
+- `/6/gasto_publico`, `/6/cambio_suelo`, `/6/corredor_industrial`, `/6/relieve_5m` y `/6/huella_construida` leen `oro."6.<subtema>"` si existe `ORO_DB_URL`. Si no, `app/pages/6/_e6.py` cae a un parquet de `local_avances/`. Ese respaldo no forma parte de la entrega: la página tiene que salir de oro.
+
+## Visualizaciones
 
 ```text
 figures/{equipo}/{subtema}/figura.py
@@ -46,7 +110,7 @@ figures/{equipo}/{subtema}/figura.py
 
 La página de la aplicación vive en `app/pages/{equipo}/`. Esa página no vuelve a dibujar la figura: importa `figura` desde `figures/{equipo}/{subtema}/figura.py` y la pone en la plantilla. El PDF importa la misma función.
 
-## Qué debe devolver tu módulo
+## Qué debe devolver este módulo
 
 Una función que lea la tabla de oro de ese subtema y devuelva un `plotly.graph_objects.Figure`.
 
@@ -107,7 +171,7 @@ bronze/{equipo}/{dataset}/fecha=AAAA-MM-DD/
 
 El equipo 3, por ejemplo, deja un censo en `bronze/3/censo_2020/fecha=2026-11-19/`. Lo restringido va a `bronze-restringido`, con la misma forma de ruta. El ráster va al bucket `raster`.
 
-Ese MinIO es local: cada quien ve solo lo que subió en su Docker. El lugar compartido, mientras no haya un servidor, sigue siendo la carpeta de Drive del curso. Los DAG todavía no leen esos archivos: las tareas de ingesta, plata y oro están vacías, así que subir el archivo no dispara el proceso. La figura tampoco abre MinIO. Recibe la tabla en `datos`, y esa función no cambia de ruta cuando `datos` pase a salir de oro.
+Ese MinIO es local: cada quien ve solo lo que subió en su Docker. La copia compartida sigue en Drive hasta que Producción la deposita en ese prefijo. El código no abre Drive ni `datos/`. Solo el DAG `equipo_4` lee el bronce y publica plata y oro, y su ingesta todavía hay que pasarla a la ruta de arriba. En los otros cinco, ingesta, plata y oro están vacías, así que subir el archivo no dispara el proceso hasta que Producción conecte el DAG.
 
 ## Qué no entra en Git
 
@@ -116,9 +180,11 @@ No subas ráster, nubes de puntos, CSV, XLS, XLSX ni directorios masivos. Esos a
 ## Antes de avisar que está lista
 
 1. La función está en `figures/{equipo}/{subtema}/figura.py` y la página importa esa función.
-2. La figura sale de la tabla de oro, con su `viz_id`.
-3. La primaria de este subtema no está usada por otra visualización de tu equipo.
-4. La secundaria está indicada.
-5. El título de la figura es el del subtema.
-6. Si tu equipo todavía no tiene fuente en streaming, esta puede ser esa fuente y queda marcada en el catálogo.
+2. Ingesta, plata y oro leen MinIO y PostgreSQL. En `pipelines/`, `dags/` y `app/pages/` no quedó ninguna ruta local.
+3. `dags/equipo_{n}.py` corre ingesta, plata, oro, validación y catálogo, y al dispararlo la tabla `oro."<viz_id>"` se publica.
+4. La figura sale de esa tabla. La página no abre un parquet ni una carpeta de respaldo.
+5. La primaria de este subtema no está usada por otra visualización de tu equipo.
+6. La secundaria está indicada, con valor de referencia y tolerancia en el catálogo.
+7. El título de la figura es el del subtema.
+8. Si tu equipo todavía no tiene fuente en streaming, esta puede ser esa fuente y queda marcada en el catálogo.
 

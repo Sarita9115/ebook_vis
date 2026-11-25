@@ -1,0 +1,191 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" preserveAspectRatio="xMidYMid meet" role="img">
+<style>
+.nube { animation: deriva 28s ease-in-out infinite alternate; }
+.nube-2 { animation: deriva 36s ease-in-out infinite alternate-reverse; }
+@keyframes deriva { from { transform: translateX(-14px); } to { transform: translateX(18px); } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<defs>
+  <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#F7F3EA" />
+    <stop offset="1" stop-color="#EDE4D1" />
+  </linearGradient>
+  <linearGradient id="suelo" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#E6DCC6" />
+    <stop offset="1" stop-color="#D5C8AA" />
+  </linearGradient>
+  <linearGradient id="asfalto" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#B9AF97" />
+    <stop offset="1" stop-color="#A69B80" />
+  </linearGradient>
+  <linearGradient id="vidrio" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#7FB7B5" />
+    <stop offset="1" stop-color="#1F7A80" />
+  </linearGradient>
+  <linearGradient id="hueco" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#14363A" />
+    <stop offset="1" stop-color="#174F54" />
+  </linearGradient>
+</defs>
+
+
+<rect width="1200" height="530" fill="url(#cielo)" />
+<circle cx="205" cy="126" r="54" fill="#F3E2BC" opacity="0.78" />
+<g class="nube" fill="#FFFFFF" opacity="0.8">
+  <ellipse cx="320" cy="116" rx="78" ry="18" />
+  <ellipse cx="372" cy="103" rx="46" ry="17" />
+  <ellipse cx="275" cy="108" rx="36" ry="13" />
+</g>
+<g class="nube-2" fill="#FFFFFF" opacity="0.72">
+  <ellipse cx="965" cy="96" rx="84" ry="16" />
+  <ellipse cx="1018" cy="84" rx="48" ry="15" />
+</g>
+
+
+<g fill="#E3D9C3" stroke="#CBBF9F" stroke-width="1.5">
+  <rect x="46" y="340" width="96" height="220" />
+  <rect x="160" y="375" width="84" height="185" />
+  <rect x="430" y="295" width="110" height="265" />
+  <rect x="1008" y="348" width="116" height="212" />
+  <rect x="1110" y="395" width="90" height="165" />
+</g>
+
+
+<g>
+  <rect x="645" y="135" width="235" height="390" rx="3" fill="#EAE3D2" stroke="#9C8F6E" stroke-width="2" />
+  <rect x="638" y="124" width="249" height="14" rx="2" fill="#CBBF9F" stroke="#9C8F6E" stroke-width="2" />
+  <rect x="692" y="106" width="140" height="18" rx="2" fill="#DDD3BC" stroke="#9C8F6E" stroke-width="2" />
+  <g fill="url(#vidrio)" stroke="#9C8F6E" stroke-width="1.5" opacity="0.88">
+    <rect x="668" y="158" width="42" height="32" rx="2" />
+    <rect x="720" y="158" width="42" height="32" rx="2" />
+    <rect x="772" y="158" width="42" height="32" rx="2" />
+    <rect x="824" y="158" width="36" height="32" rx="2" />
+    <rect x="668" y="204" width="42" height="32" rx="2" />
+    <rect x="720" y="204" width="42" height="32" rx="2" />
+    <rect x="772" y="204" width="42" height="32" rx="2" />
+    <rect x="824" y="204" width="36" height="32" rx="2" />
+    <rect x="668" y="250" width="42" height="32" rx="2" />
+    <rect x="720" y="250" width="42" height="32" rx="2" />
+    <rect x="772" y="250" width="42" height="32" rx="2" />
+    <rect x="824" y="250" width="36" height="32" rx="2" />
+  </g>
+</g>
+
+
+<g>
+  <rect x="478" y="260" width="175" height="310" fill="#F1EBDD" stroke="#9C8F6E" stroke-width="2" />
+  <rect x="470" y="248" width="191" height="14" rx="2" fill="#CBBF9F" stroke="#9C8F6E" stroke-width="2" />
+  <g fill="#7FB7B5" stroke="#9C8F6E" stroke-width="1.5" opacity="0.75">
+    <rect x="498" y="282" width="34" height="44" rx="2" />
+    <rect x="546" y="282" width="34" height="44" rx="2" />
+    <rect x="594" y="282" width="34" height="44" rx="2" />
+    <rect x="498" y="344" width="34" height="44" rx="2" />
+    <rect x="546" y="344" width="34" height="44" rx="2" />
+    <rect x="594" y="344" width="34" height="44" rx="2" />
+  </g>
+</g>
+
+
+<g>
+  <circle cx="72" cy="542" r="46" fill="#2F5D3A" />
+  <circle cx="118" cy="532" r="52" fill="#47774F" />
+  <circle cx="164" cy="548" r="40" fill="#6E9A6B" />
+  <circle cx="485" cy="548" r="38" fill="#47774F" />
+  <circle cx="1018" cy="535" r="48" fill="#2F5D3A" />
+  <circle cx="1068" cy="524" r="54" fill="#47774F" />
+  <circle cx="1122" cy="540" r="44" fill="#6E9A6B" />
+  <circle cx="1168" cy="548" r="38" fill="#2F5D3A" />
+</g>
+
+
+<rect y="555" width="1200" height="118" fill="url(#suelo)" />
+<line x1="0" y1="673" x2="1200" y2="673" stroke="#9C8F6E" stroke-width="2.5" />
+<rect y="673" width="1200" height="77" fill="url(#asfalto)" />
+<g stroke="#EAE3D2" stroke-width="4" stroke-dasharray="36 28" opacity="0.85">
+  <line x1="30" y1="712" x2="1170" y2="712" />
+</g>
+<g stroke="#CBBF9F" stroke-width="1.5" opacity="0.7">
+  <line x1="220" y1="660" x2="195" y2="673" />
+  <line x1="460" y1="660" x2="445" y2="673" />
+  <line x1="750" y1="660" x2="750" y2="673" />
+  <line x1="1010" y1="660" x2="1025" y2="673" />
+</g>
+
+
+<ellipse cx="325" cy="662" rx="165" ry="12" fill="#BFB293" opacity="0.65" />
+<ellipse cx="750" cy="664" rx="250" ry="14" fill="#BFB293" opacity="0.7" />
+
+
+<g>
+  <rect x="190" y="458" width="270" height="202" fill="#F1EBDD" stroke="#9C8F6E" stroke-width="2" />
+  <polygon points="176,458 214,414 440,414 474,458" fill="#C2562F" stroke="#7E4229" stroke-width="2" stroke-linejoin="round" />
+  <line x1="230" y1="414" x2="210" y2="458" stroke="#A64522" stroke-width="2" />
+  <line x1="274" y1="414" x2="262" y2="458" stroke="#A64522" stroke-width="2" />
+  <line x1="322" y1="414" x2="322" y2="458" stroke="#A64522" stroke-width="2" />
+  <line x1="370" y1="414" x2="380" y2="458" stroke="#A64522" stroke-width="2" />
+  <line x1="414" y1="414" x2="432" y2="458" stroke="#A64522" stroke-width="2" />
+  <rect x="190" y="624" width="270" height="36" fill="#CBBF9F" stroke="#9C8F6E" stroke-width="1.5" />
+  <rect x="224" y="514" width="76" height="146" rx="2" fill="#7E7356" stroke="#5E5540" stroke-width="2" />
+  <rect x="234" y="524" width="56" height="58" fill="#7FB7B5" stroke="#5E5540" stroke-width="1.5" />
+  <circle cx="288" cy="596" r="4" fill="#EAE3D2" />
+  <rect x="328" y="514" width="104" height="84" rx="2" fill="#EAE3D2" stroke="#9C8F6E" stroke-width="2" />
+  <rect x="336" y="522" width="88" height="68" fill="url(#vidrio)" opacity="0.82" />
+  <line x1="380" y1="522" x2="380" y2="590" stroke="#EAE3D2" stroke-width="2" />
+  <polygon points="320,514 328,488 432,488 440,514" fill="#1F7A80" stroke="#145256" stroke-width="1.5" />
+  <line x1="354" y1="488" x2="350" y2="514" stroke="#EAE3D2" stroke-width="3" />
+  <line x1="380" y1="488" x2="380" y2="514" stroke="#EAE3D2" stroke-width="3" />
+  <line x1="406" y1="488" x2="410" y2="514" stroke="#EAE3D2" stroke-width="3" />
+</g>
+
+
+<g>
+  <line x1="654" y1="304" x2="654" y2="332" stroke="#7E7356" stroke-width="4" />
+  <line x1="846" y1="304" x2="846" y2="332" stroke="#7E7356" stroke-width="4" />
+  <rect x="626" y="256" width="248" height="52" rx="6" fill="#F7F3EA" stroke="#2B2A26" stroke-width="2.5" />
+  <text x="750" y="289" text-anchor="middle" font-family="Open Sans, Verdana, Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="1.5" fill="#2B2A26">UNIDAD ECONÓMICA</text>
+
+  <rect x="530" y="332" width="440" height="328" fill="#F7F3EA" stroke="#9C8F6E" stroke-width="2.5" />
+  <rect x="518" y="318" width="464" height="18" rx="3" fill="#CBBF9F" stroke="#9C8F6E" stroke-width="2" />
+  <rect x="530" y="336" width="440" height="10" fill="#C2562F" />
+  <rect x="530" y="346" width="26" height="314" fill="#EAE3D2" stroke="#9C8F6E" stroke-width="1.5" />
+  <rect x="944" y="346" width="26" height="314" fill="#EAE3D2" stroke="#9C8F6E" stroke-width="1.5" />
+  <rect x="530" y="630" width="440" height="30" fill="#CBBF9F" stroke="#9C8F6E" stroke-width="1.5" />
+
+  <rect x="602" y="362" width="296" height="52" rx="4" fill="#1F7A80" stroke="#144E52" stroke-width="2" />
+  <rect x="610" y="369" width="280" height="38" rx="2" fill="none" stroke="#EAE3D2" stroke-width="1.5" opacity="0.8" />
+  <text x="750" y="395" text-anchor="middle" font-family="Open Sans, Verdana, Arial, sans-serif" font-size="22" font-weight="700" letter-spacing="2" fill="#F7F3EA">DENUE · SAIC</text>
+
+  <g>
+    <rect x="572" y="454" width="66" height="128" rx="3" fill="#EAE3D2" stroke="#9C8F6E" stroke-width="2" />
+    <rect x="580" y="462" width="50" height="112" fill="url(#vidrio)" opacity="0.85" />
+    <line x1="580" y1="518" x2="630" y2="518" stroke="#EAE3D2" stroke-width="2" />
+    <rect x="568" y="582" width="74" height="10" rx="2" fill="#CBBF9F" stroke="#9C8F6E" stroke-width="1.5" />
+
+    <rect x="862" y="454" width="66" height="128" rx="3" fill="#EAE3D2" stroke="#9C8F6E" stroke-width="2" />
+    <rect x="870" y="462" width="50" height="112" fill="url(#vidrio)" opacity="0.85" />
+    <line x1="870" y1="518" x2="920" y2="518" stroke="#EAE3D2" stroke-width="2" />
+    <rect x="858" y="582" width="74" height="10" rx="2" fill="#CBBF9F" stroke="#9C8F6E" stroke-width="1.5" />
+  </g>
+
+  
+  <rect x="650" y="425" width="200" height="235" rx="3" fill="#CBBF9F" stroke="#9C8F6E" stroke-width="2" />
+  <rect x="660" y="435" width="180" height="225" fill="url(#hueco)" />
+  <rect x="642" y="656" width="216" height="12" rx="2" fill="#EAE3D2" stroke="#9C8F6E" stroke-width="1.5" />
+</g>
+
+
+<g>
+  <polygon points="620,660 644,660 648,632 616,632" fill="#C2562F" stroke="#7E4229" stroke-width="1.5" />
+  <circle cx="632" cy="618" r="16" fill="#2F5D3A" />
+  <circle cx="624" cy="622" r="11" fill="#47774F" />
+  <polygon points="856,660 880,660 884,632 852,632" fill="#C2562F" stroke="#7E4229" stroke-width="1.5" />
+  <circle cx="868" cy="618" r="16" fill="#2F5D3A" />
+  <circle cx="876" cy="622" r="11" fill="#47774F" />
+
+  <rect x="1036" y="458" width="8" height="202" fill="#2B2A26" />
+  <rect x="1028" y="646" width="24" height="14" rx="2" fill="#2B2A26" />
+  <path d="M1040 458 Q1040 434 1018 434" fill="none" stroke="#2B2A26" stroke-width="5" />
+  <ellipse cx="1014" cy="442" rx="14" ry="8" fill="#F3E2BC" stroke="#9C8F6E" stroke-width="1.5" />
+</g>
+</svg>
