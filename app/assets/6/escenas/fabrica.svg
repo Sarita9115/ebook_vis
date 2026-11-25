@@ -1,0 +1,170 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 750" preserveAspectRatio="xMidYMid meet" role="img">
+<style>
+.engrane-cw { animation: girar-cw 14s linear infinite; transform-origin: 320px 548px; }
+.engrane-ccw-2 { animation: girar-ccw 10s linear infinite; transform-origin: 230.4px 433.3px; }
+.engrane-ccw-3 { animation: girar-ccw 8s linear infinite; transform-origin: 194.6px 593.7px; }
+@keyframes girar-cw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes girar-ccw { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+.humo { animation: subir 5.5s ease-in-out infinite; }
+.humo-2 { animation: subir 6.8s ease-in-out infinite 1.4s; }
+@keyframes subir {
+  0% { transform: translate(0px, 0px) scale(0.95); opacity: 0.72; }
+  50% { transform: translate(12px, -14px) scale(1.06); opacity: 0.5; }
+  100% { transform: translate(24px, -26px) scale(1.14); opacity: 0.18; }
+}
+.banda-linea { stroke-dasharray: 16 14; animation: avanzar 1.8s linear infinite; }
+@keyframes avanzar { to { stroke-dashoffset: -30; } }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<defs>
+  <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#F7F3EA" />
+    <stop offset="1" stop-color="#EDE4D1" />
+  </linearGradient>
+  <linearGradient id="suelo" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#E6DCC6" />
+    <stop offset="1" stop-color="#D4C7A9" />
+  </linearGradient>
+  <linearGradient id="vidrio" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#7FB7B5" />
+    <stop offset="1" stop-color="#1F7A80" />
+  </linearGradient>
+  <linearGradient id="techo" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#C2562F" />
+    <stop offset="1" stop-color="#A64522" />
+  </linearGradient>
+</defs>
+
+
+<rect width="1200" height="540" fill="url(#cielo)" />
+<circle cx="1045" cy="115" r="54" fill="#F3E2BC" opacity="0.76" />
+
+
+<g class="humo" fill="#FFFFFF" opacity="0.72">
+  <ellipse cx="268" cy="88" rx="34" ry="14" />
+  <ellipse cx="304" cy="74" rx="44" ry="17" />
+  <ellipse cx="352" cy="64" rx="36" ry="13" />
+  <ellipse cx="672" cy="76" rx="36" ry="14" />
+  <ellipse cx="716" cy="62" rx="48" ry="17" />
+</g>
+<g class="humo-2" fill="#FFFFFF" opacity="0.65">
+  <ellipse cx="344" cy="108" rx="28" ry="12" />
+  <ellipse cx="380" cy="96" rx="34" ry="14" />
+  <ellipse cx="766" cy="96" rx="30" ry="13" />
+  <ellipse cx="806" cy="84" rx="38" ry="15" />
+  <ellipse cx="1014" cy="242" rx="26" ry="11" />
+</g>
+
+
+<g fill="#E3D9C3" stroke="#CBBF9F" stroke-width="1.5">
+  <rect x="30" y="370" width="110" height="190" />
+  <rect x="1030" y="388" width="140" height="172" />
+</g>
+<g>
+  <circle cx="62" cy="532" r="46" fill="#2F5D3A" />
+  <circle cx="108" cy="522" r="50" fill="#47774F" />
+  <circle cx="1046" cy="530" r="48" fill="#2F5D3A" />
+  <circle cx="1098" cy="518" r="54" fill="#47774F" />
+  <circle cx="1154" cy="534" r="42" fill="#6E9A6B" />
+</g>
+
+
+<rect y="540" width="1200" height="210" fill="url(#suelo)" />
+<line x1="0" y1="646" x2="1200" y2="646" stroke="#CBBF9F" stroke-width="2" />
+<ellipse cx="610" cy="575" rx="455" ry="22" fill="#BFB293" opacity="0.6" />
+
+
+<g stroke="#5E5540" stroke-width="2" stroke-linejoin="round">
+  <polygon points="236,274 246,122 276,122 286,274" fill="#CBBF9F" />
+  <rect x="242" y="138" width="38" height="14" fill="#C2562F" />
+  <rect x="240" y="114" width="42" height="10" rx="2" fill="#7E7356" />
+  <polygon points="318,242 326,144 352,144 360,242" fill="#DDD3BC" />
+  <rect x="323" y="158" width="32" height="12" fill="#C2562F" />
+  <rect x="321" y="136" width="36" height="10" rx="2" fill="#7E7356" />
+  <polygon points="622,238 634,112 668,112 680,238" fill="#CBBF9F" />
+  <rect x="630" y="128" width="42" height="15" fill="#C2562F" />
+  <rect x="628" y="104" width="46" height="10" rx="2" fill="#7E7356" />
+  <polygon points="712,256 722,138 752,138 762,256" fill="#DDD3BC" />
+  <rect x="719" y="152" width="36" height="13" fill="#C2562F" />
+  <rect x="717" y="130" width="40" height="10" rx="2" fill="#7E7356" />
+  <polygon points="974,408 982,276 1004,276 1012,408" fill="#CBBF9F" />
+  <rect x="979" y="290" width="28" height="10" fill="#C2562F" />
+  <rect x="978" y="270" width="30" height="8" rx="2" fill="#7E7356" />
+</g>
+
+
+<g>
+  <rect x="916" y="388" width="126" height="170" fill="#EAE3D2" stroke="#9C8F6E" stroke-width="2" />
+  <polygon points="916,388 948,354 1042,354 1042,388" fill="#CBBF9F" stroke="#9C8F6E" stroke-width="2" />
+  <rect x="946" y="426" width="66" height="44" rx="2" fill="url(#vidrio)" stroke="#9C8F6E" stroke-width="1.5" opacity="0.82" />
+
+  <polygon points="184,310 538,188 948,290 554,310" fill="url(#techo)" stroke="#7E4229" stroke-width="2.5" stroke-linejoin="round" />
+  <polygon points="548,224 912,298 912,332 548,266" fill="#7FB7B5" stroke="#5E5540" stroke-width="2" opacity="0.85" />
+  <g stroke="#EAE3D2" stroke-width="2">
+    <line x1="600" y1="234" x2="600" y2="275" />
+    <line x1="654" y1="245" x2="654" y2="285" />
+    <line x1="708" y1="256" x2="708" y2="295" />
+    <line x1="762" y1="267" x2="762" y2="305" />
+    <line x1="816" y1="278" x2="816" y2="315" />
+    <line x1="868" y1="289" x2="868" y2="324" />
+  </g>
+
+  <polygon points="184,310 554,230 554,562 184,562" fill="#F7F3EA" stroke="#9C8F6E" stroke-width="2.5" stroke-linejoin="round" />
+  <rect x="184" y="532" width="370" height="30" fill="#CBBF9F" stroke="#9C8F6E" stroke-width="1.5" />
+
+  <polygon points="554,266 948,332 948,562 554,562" fill="#EAE3D2" stroke="#9C8F6E" stroke-width="2.5" stroke-linejoin="round" />
+  <rect x="554" y="532" width="394" height="30" fill="#CBBF9F" stroke="#9C8F6E" stroke-width="1.5" />
+
+  <g fill="url(#vidrio)" stroke="#7E7356" stroke-width="2" opacity="0.88">
+    <rect x="584" y="346" width="150" height="122" rx="2" />
+    <rect x="758" y="366" width="160" height="72" rx="2" />
+  </g>
+  <g stroke="#EAE3D2" stroke-width="2">
+    <line x1="634" y1="346" x2="634" y2="468" />
+    <line x1="684" y1="346" x2="684" y2="468" />
+    <line x1="584" y1="386" x2="734" y2="386" />
+    <line x1="584" y1="426" x2="734" y2="426" />
+    <line x1="812" y1="366" x2="812" y2="438" />
+    <line x1="864" y1="366" x2="864" y2="438" />
+    <line x1="758" y1="402" x2="918" y2="402" />
+  </g>
+
+  <rect x="774" y="458" width="126" height="104" rx="2" fill="#7E7356" stroke="#2B2A26" stroke-width="2" />
+  <g stroke="#5E5540" stroke-width="2">
+    <line x1="774" y1="478" x2="900" y2="478" />
+    <line x1="774" y1="498" x2="900" y2="498" />
+    <line x1="774" y1="518" x2="900" y2="518" />
+    <line x1="774" y1="538" x2="900" y2="538" />
+  </g>
+
+  <rect x="218" y="314" width="302" height="110" rx="6" fill="#F7F3EA" stroke="#2B2A26" stroke-width="2.5" />
+  <rect x="226" y="322" width="286" height="94" rx="3" fill="none" stroke="#1F7A80" stroke-width="2" />
+  <text x="369" y="362" text-anchor="middle" font-family="Open Sans, Verdana, Arial, sans-serif" font-size="24" font-weight="700" letter-spacing="1.4" fill="#2B2A26">FÁBRICA DE IED</text>
+  <line x1="258" y1="376" x2="480" y2="376" stroke="#C2562F" stroke-width="2.5" />
+  <text x="369" y="402" text-anchor="middle" font-family="Open Sans, Verdana, Arial, sans-serif" font-size="21" font-weight="700" letter-spacing="1.6" fill="#1F7A80">Y CRECIMIENTO</text>
+
+  <rect x="336" y="468" width="164" height="94" rx="8" fill="#14363A" stroke="#2B2A26" stroke-width="2.5" />
+</g>
+
+
+<g>
+  <polygon points="0,664 190,584 226,612 24,712 0,712" fill="#7E7356" stroke="#2B2A26" stroke-width="2.5" stroke-linejoin="round" />
+  <line x1="18" y1="678" x2="196" y2="598" stroke="#EAE3D2" stroke-width="3" class="banda-linea" />
+  <circle cx="42.0" cy="678.0" r="8" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" /><circle cx="42.0" cy="678.0" r="2.5" fill="#2B2A26" />
+  <circle cx="82.0" cy="660.0" r="8" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" /><circle cx="82.0" cy="660.0" r="2.5" fill="#2B2A26" />
+  <circle cx="122.0" cy="642.0" r="8" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" /><circle cx="122.0" cy="642.0" r="2.5" fill="#2B2A26" />
+  <circle cx="162.0" cy="624.0" r="8" fill="#EAE3D2" stroke="#2B2A26" stroke-width="2" /><circle cx="162.0" cy="624.0" r="2.5" fill="#2B2A26" />
+</g>
+
+
+<g>
+  <rect x="466" y="618" width="12" height="86" fill="#7E7356" stroke="#2B2A26" stroke-width="2" />
+  <rect x="612" y="668" width="12" height="72" fill="#7E7356" stroke="#2B2A26" stroke-width="2" />
+  <rect x="742" y="704" width="12" height="46" fill="#7E7356" stroke="#2B2A26" stroke-width="2" />
+  <polygon points="418,554 786,678 756,722 396,596" fill="#7E7356" stroke="#2B2A26" stroke-width="2.5" stroke-linejoin="round" />
+  <polygon points="424,562 772,680 760,698 412,578" fill="#4E4839" />
+  <line x1="422" y1="572" x2="762" y2="688" stroke="#EAE3D2" stroke-width="3.5" class="banda-linea" />
+  <g stroke="#2B2A26" stroke-width="2" stroke-linejoin="round">
+    <rect x="488" y="544" width="42" height="36" rx="2" fill="#C2562F" transform="rotate(18 509 562)" />
+    
