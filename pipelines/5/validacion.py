@@ -46,7 +46,7 @@ def validar() -> dict[str, str]:
     chequeo("treinta_anos", d["grado_promedio"].between(0, 20).all(), "grado promedio fuera de 0-20")
     chequeo("treinta_anos", set(d["entidad"]) <= set(comun.PENINSULA.values()), "entidades fuera de la península")
     chequeo("treinta_anos", "Yucatán" in set(d["entidad"]), "falta Yucatán")
-    chequeo("treinta_anos", d["anio"].min() <= 1990, "falta el dato de 1990")
+    chequeo("treinta_anos", d["anio"].min() <= 2000, "falta el dato de 2000")
 
     d = _oro("pobreza_rezago")
     chequeo("pobreza_rezago", d["pobreza_pct"].between(0, 100).all(), "pobreza fuera de 0-100")

@@ -1,12 +1,12 @@
 """Treinta años aprendiendo
 viz_id: 5.treinta_anos
 
-Línea de Yucatán, 1990-2025, con el valor y el nivel escolar de cada punto
+Línea de Yucatán, 2000-2025, con el valor y el nivel escolar de cada punto
 (boceto del equipo). Líneas de referencia punteadas marcan cuántos años
 corresponden a cada nivel, hasta la licenciatura.
 
 Tabla de oro (`datos`), formato largo:
-    anio            año (1990 viene del Censo 1990)
+    anio            año (serie de INEGI, Educacion_05)
     entidad         "Yucatán" (si vienen otras, se ignoran)
     sexo            "Total" (si vienen otros, se ignoran)
     grado_promedio  años de escolaridad, población de 15 años y más
@@ -105,7 +105,7 @@ def figura(datos) -> go.Figure:
                                 f"para licenciatura completa",
                            font=dict(size=14, color=TEXTO))
     fig.update_xaxes(title="Años", tickmode="array", tickvals=list(d["anio"]),
-                     range=[1987, 2031], showline=True, linecolor=TEXTO, ticks="outside",
+                     range=[1997, 2031], showline=True, linecolor=TEXTO, ticks="outside",
                      showgrid=False, tickformat="d")
     fig.update_yaxes(title="Grado de escolaridad (años)", range=[0, 17.5],
                      tickvals=list(range(0, 18, 2)), showline=True, linecolor=TEXTO,

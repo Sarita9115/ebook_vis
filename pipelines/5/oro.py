@@ -51,8 +51,7 @@ def _con_meta(df: pd.DataFrame, subtema: str, fechas: pd.DataFrame) -> pd.DataFr
 
 
 def oro_treinta_anos() -> pd.DataFrame:
-    d = pd.concat([_plata("educacion_05"), _plata("grado_1990")], ignore_index=True)
-    d = d.rename(columns={"valor": "grado_promedio"})
+    d = _plata("educacion_05").rename(columns={"valor": "grado_promedio"})
     out = d[["anio", "entidad", "sexo", "grado_promedio"]].drop_duplicates(["anio", "entidad", "sexo"])
     return out.sort_values(["entidad", "sexo", "anio"]).reset_index(drop=True)
 
@@ -62,7 +61,7 @@ def oro_pobreza_rezago() -> pd.DataFrame:
     anios = [2010, 2015, 2020]
     p = p[(p["entidad"] == "Yucatán") & p["anio"].isin(anios)]
     i = i[(i["entidad"] == "Yucatán") & i["anio"].isin(anios)]
-    d = p.merge(i[["municipio_norm", "anio", "irs", "grado_rezago"]], on=["municipio_norm", "anio"], how="inner")
+    d = p.merge(i[["cve_mun", "anio", "irs", "grado_rezago"]], on=["cve_mun", "anio"], how="inner")
     print(f"pobreza: {len(p)} filas, IRS: {len(i)}, unidas: {len(d)}")
     return d[["municipio", "anio", "irs", "pobreza_pct", "grado_rezago"]].sort_values(["anio", "municipio"]).reset_index(drop=True)
 
@@ -73,8 +72,8 @@ def _porcentajes_iter(df: pd.DataFrame, anio: int) -> pd.DataFrame:
     for ambito, g in from_plata.groupby("ambito"):
         for nombre, col in __import__("itertools").chain(_indicadores().items()):
             c = col.lower()
-            ok = g[c].notna() & g["vivpar_hab"].notna()      # los '*' (confidencial) no cuentan
-            den = g.loc[ok, "vivpar_hab"].sum()
+            ok = g[c].notna() & g["viv_base"].notna()      # los '*' (confidencial) no cuentan
+            den = g.loc[ok, "viv_base"].sum()
             if den > 0:
                 filas.append((nombre, anio, ambito, round(100 * g.loc[ok, c].sum() / den, 2)))
     return pd.DataFrame(filas, columns=["indicador", "anio", "ambito", "porcentaje"])

@@ -5,7 +5,6 @@ Tablas (todas en una sola transacción):
 
 - plata."5.bronce_archivos"   qué se leyó de bronce: dataset, archivo, fecha de obtención, origen, sha256
 - plata."5.educacion_05"      entidad, sexo, anio, valor (grado promedio de escolaridad, INEGI)
-- plata."5.grado_1990"        entidad, sexo, anio, valor (Censo 1990)
 - plata."5.pobreza_municipal" municipio, anio, pobreza_pct (CONEVAL)
 - plata."5.irs_municipal"     municipio, anio, irs, grado_rezago (CONEVAL)
 - plata."5.iter_2020", plata."5.iter_2010"  localidades con las variables de vivienda, con ámbito rural/urbano
@@ -44,7 +43,9 @@ ESQUEMA = "plata"
 ENTIDADES = {norm(n): n for n in comun.PENINSULA.values()}   # 'yucatan' -> 'Yucatán'
 
 
-# ------------------------------------------------------------------ Educacion_05 y Censo 1990
+# ------------------------------------------------------------------ Educacion_05
+# El Censo 1990 (tabulados de conteos, sin 'grado promedio') se guarda en bronce y se registra en
+# plata."5.bronce_archivos"; no se transforma aquí.
 def _es_anio(v) -> bool:
     try:
         n = float(v)
@@ -54,66 +55,44 @@ def _es_anio(v) -> bool:
 
 
 def leer_inegi_ancho(datos: bytes) -> pd.DataFrame:
-    """Tabulado de INEGI en XLSX (años en columnas) -> entidad, sexo, anio, valor, de la península."""
+    """Educacion_05 (XLSX exportado de INEGI) -> entidad, sexo, anio, valor, solo de la península.
+
+    Diseño real: una fila con los años (cada año repetido 3 veces), la fila siguiente con
+    Total / Mujeres / Hombres, y debajo una fila por entidad (nombre en la primera columna).
+    """
     hojas = pd.read_excel(io.BytesIO(datos), sheet_name=None, header=None, dtype=object)
     for nombre, crudo in hojas.items():
-        fila = next((i for i in range(min(len(crudo), 80))
+        fila = next((i for i in range(min(len(crudo), 60))
                      if sum(_es_anio(v) for v in crudo.iloc[i]) >= 3), None)
-        if fila is None:
+        if fila is None or fila + 1 >= len(crudo):
             continue
-        print(f"hoja {nombre}: encabezado de años en la fila {fila}")
-        cols = {j: int(float(v)) for j, v in enumerate(crudo.iloc[fila]) if _es_anio(v)}
-        primera = min(cols)
-        sexos = {"total", "hombres", "mujeres"}
-        entidad, filas = None, []
-        for _, r in crudo.iloc[fila + 1:].iterrows():
-            etiquetas = [str(x).strip() for x in r.iloc[:primera] if pd.notna(x) and str(x).strip()]
-            if not etiquetas:
+        sexos = {"total": "Total", "mujeres": "Mujeres", "hombres": "Hombres"}
+        cols = {j: (int(float(a)), sexos[norm(b)]) for j, (a, b) in enumerate(zip(crudo.iloc[fila], crudo.iloc[fila + 1]))
+                if _es_anio(a) and norm(b) in sexos}
+        if not cols:
+            continue
+        print(f"hoja {nombre}: años en la fila {fila}, {len(cols)} columnas de datos")
+        filas = []
+        for _, r in crudo.iloc[fila + 2:].iterrows():
+            ent = ENTIDADES.get(norm(re.sub(r"^\d+\s*", "", str(r.iloc[0]))))   # recorte a la península
+            if not ent:
                 continue
-            if norm(etiquetas[-1]) in sexos:
-                sexo = etiquetas[-1].capitalize()
-                if len(etiquetas) >= 2:
-                    entidad = etiquetas[0]
-            else:
-                entidad, sexo = etiquetas[0], "Total"
-            for j, anio in cols.items():
+            for j, (anio, sexo) in cols.items():
                 v = pd.to_numeric(r.iloc[j], errors="coerce")
-                if pd.notna(v) and entidad:
-                    filas.append((re.sub(r"^\d+\s*", "", entidad), sexo, anio, float(v)))
+                if pd.notna(v):
+                    filas.append((ent, sexo, anio, float(v)))
         d = pd.DataFrame(filas, columns=["entidad", "sexo", "anio", "valor"])
-        d["entidad"] = d["entidad"].map(norm).map(ENTIDADES)        # recorte a la península
-        d = d.dropna(subset=["entidad"])
         if not d.empty:
             return d
-    raise ValueError("No encontré, en el XLSX de Educacion_05, una fila de encabezado con años (2000, 2005...) "
-                     "ni las entidades de la península. Revisa el archivo y ajusta leer_inegi_ancho().")
-
-
-def leer_grado_1990(datos: bytes) -> pd.DataFrame:
-    """Grado promedio de escolaridad de la península en 1990 (Censo 1990)."""
-    hojas = pd.read_excel(io.BytesIO(datos), sheet_name=None, header=None, dtype=object)
-    for h in hojas.values():
-        pos = [(i, j) for i in range(len(h)) for j in range(h.shape[1])
-               if isinstance(h.iat[i, j], str) and "grado promedio" in norm(h.iat[i, j])]
-        if not pos:
-            continue
-        j0, filas = pos[0][1], []
-        for i in range(len(h)):
-            ent = ENTIDADES.get(norm(re.sub(r"^\d+\s*", "", str(h.iat[i, 0]))))
-            v = pd.to_numeric(h.iat[i, j0], errors="coerce")
-            if ent and pd.notna(v):
-                filas.append((ent, "Total", 1990, float(v)))
-        if filas:
-            return pd.DataFrame(filas, columns=["entidad", "sexo", "anio", "valor"]).drop_duplicates("entidad")
-    raise ValueError("No encontré 'grado promedio' de las entidades de la península en el XLSX del Censo 1990. "
-                     "Abre el archivo, localiza la tabla y ajusta leer_grado_1990().")
+    raise ValueError("Educacion_05: no encontré la fila de años con Total/Mujeres/Hombres debajo, "
+                     "ni las entidades Campeche, Quintana Roo o Yucatán. Revisa el XLSX.")
 
 
 # ------------------------------------------------------------------ Pobreza municipal e IRS
 COL_POBREZA = {
     "entidad": ["entidad_federativa", "entidad", "nom_ent", "nombre_entidad"],
     "municipio": ["municipio", "nom_mun", "nombre_municipio"],
-    "anio": ["anio", "ano", "periodo", "year"],
+    "anio": ["anio", "ano", "periodo", "year", "anio_medicion", "ano_medicion", "medicion", "anio_estimacion"],
     "pobreza": ["pobreza", "pobreza_porcentaje", "porcentaje_pobreza", "pobreza_pct", "pobreza_p"],
 }
 
@@ -126,20 +105,31 @@ def _col(df, claves, que):
                    "Ajusta COL_POBREZA en plata.py.")
 
 
+def _cve_mun(clave_mun, clave_ent):
+    """Clave INEGI de 5 dígitos como entero (31001 = Abalá); acepta '1001', '001' o '31001'."""
+    c = pd.to_numeric(clave_mun, errors="coerce")
+    return c.where(c >= 1000, c + pd.to_numeric(clave_ent, errors="coerce") * 1000)
+
+
 def limpia_pobreza(datos: bytes) -> pd.DataFrame:
     df = comun.leer_csv_texto(datos)
     df.columns = [norm(c).replace(" ", "_") for c in df.columns]
-    print("columnas pobreza_municipal:", list(df.columns))
-    ce, cm, ca, cp = (_col(df, COL_POBREZA[k], k) for k in ("entidad", "municipio", "anio", "pobreza"))
-    df["entidad"] = df[ce].map(norm).map(ENTIDADES)
-    df = df.dropna(subset=["entidad"]).copy()                      # recorte a la península
-    df["anio"] = pd.to_numeric(df[ca], errors="coerce")
+    print("columnas pobreza_municipal:", list(df.columns)[:8], "...")
+    ca, cp, cm = (_col(df, COL_POBREZA[k], k) for k in ("anio", "pobreza", "municipio"))
+    exigir("clave_entidad" in df.columns and "clave_municipio" in df.columns,
+           f"El CSV de pobreza debe traer clave_entidad y clave_municipio; trae {list(df.columns)[:10]}")
+    df["ent"] = pd.to_numeric(df["clave_entidad"], errors="coerce")
+    df = df[df["ent"].isin(list(comun.PENINSULA))].copy()               # recorte a la península
+    df["entidad"] = df["ent"].astype(int).map(comun.PENINSULA)
+    df["anio"] = pd.to_numeric(df[ca].astype(str).str[:4], errors="coerce")   # 'periodo' = 2020-01-01
     df["pobreza_pct"] = pd.to_numeric(df[cp].str.replace(",", "."), errors="coerce")
     if df["pobreza_pct"].max() <= 1.0:
         df["pobreza_pct"] *= 100
     df["municipio"] = df[cm].str.strip()
     df["municipio_norm"] = df["municipio"].map(norm)
-    return df.dropna(subset=["anio", "pobreza_pct"])[["entidad", "municipio", "municipio_norm", "anio", "pobreza_pct"]]
+    df["cve_mun"] = _cve_mun(df["clave_municipio"], df["ent"])
+    return df.dropna(subset=["anio", "pobreza_pct"])[
+        ["entidad", "cve_mun", "municipio", "municipio_norm", "anio", "pobreza_pct"]]
 
 
 def _buscar(cols, incluye, excluye=()):
@@ -151,8 +141,12 @@ def _buscar(cols, incluye, excluye=()):
 
 
 def leer_irs(datos: bytes) -> pd.DataFrame:
-    """ZIP del CONEVAL con un XLSX por año -> entidad, municipio, anio, irs, grado_rezago (península)."""
-    filas = []
+    """ZIP del CONEVAL con un XLSX por año -> entidad, municipio, anio, irs, grado_rezago (península).
+
+    Hoja 'Municipios' de cada XLSX: encabezado en 2-3 filas (los rótulos pueden estar en cualquiera),
+    y una fila por municipio con la clave de entidad (04, 23, 31) en la primera columna.
+    """
+    filas, vistos = [], []
     with zipfile.ZipFile(io.BytesIO(datos)) as z:
         for info in z.infolist():
             m = re.search(r"(20\d{2})", info.filename)
@@ -160,28 +154,39 @@ def leer_irs(datos: bytes) -> pd.DataFrame:
                 continue
             anio = int(m.group(1))
             hojas = pd.read_excel(io.BytesIO(z.read(info)), sheet_name=None, header=None, dtype=object)
-            for crudo in hojas.values():
-                fila = next((i for i in range(min(len(crudo), 40))
-                             if any(isinstance(v, str) and "grado de rezago" in norm(v) for v in crudo.iloc[i])), None)
-                if fila is None:
+            for nombre, crudo in hojas.items():
+                r0 = next((i for i in range(min(len(crudo), 30))
+                           if any(norm(v).startswith("clave entidad") for v in crudo.iloc[i] if isinstance(v, str))), None)
+                if r0 is None:
                     continue
-                df = crudo.iloc[fila + 1:].copy()
-                df.columns = [str(c).strip() for c in crudo.iloc[fila]]
-                cm = _buscar(df.columns, "municipio", ("clave", "lugar"))
-                ce = _buscar(df.columns, "entidad", ("clave",))
-                ci = _buscar(df.columns, "indice de rezago")
-                cg = _buscar(df.columns, "grado de rezago")
-                if not (cm and ci and cg and ce):
+                etiquetas = {j: norm(" ".join(str(crudo.iat[i, j]) for i in range(r0, r0 + 3)
+                                              if pd.notna(crudo.iat[i, j])))
+                             for j in range(crudo.shape[1])}
+                vistos.append(f"{info.filename}/{nombre}: " + " | ".join(f"{j}={e[:40]}" for j, e in etiquetas.items() if e))
+
+                def col(incluye, excluye=()):
+                    return next((j for j, e in etiquetas.items() if incluye in e and not any(x in e for x in excluye)), None)
+
+                ck = col("clave municipio")
+                cm = col("municipio", ("clave", "lugar", "numero"))
+                ci = col("indice de rezago")
+                cg = col("grado de rezago")
+                if None in (ck, cm, ci, cg):
                     continue
-                df = df.assign(_ent=df[ce].map(norm).map(ENTIDADES)).dropna(subset=["_ent", cm])
-                print(f"IRS {anio}: {len(df)} municipios de la península")
+                datos_h = crudo.iloc[r0 + 2:]
+                clave = pd.to_numeric(datos_h.iloc[:, 0], errors="coerce")
+                datos_h = datos_h[clave.isin(list(comun.PENINSULA))]      # recorte a la península
+                clave = clave[datos_h.index].astype(int)
+                print(f"IRS {anio} ({nombre}): {len(datos_h)} filas de la península")
                 filas.append(pd.DataFrame({
-                    "entidad": df["_ent"], "municipio": df[cm].astype(str).str.strip(), "anio": anio,
-                    "irs": pd.to_numeric(df[ci], errors="coerce"),
-                    "grado_rezago": df[cg].astype(str).str.strip().str.capitalize()}))
+                    "entidad": clave.map(comun.PENINSULA).values,
+                    "cve_mun": _cve_mun(datos_h.iloc[:, ck], clave).values,
+                    "municipio": datos_h.iloc[:, cm].astype(str).str.strip().values, "anio": anio,
+                    "irs": pd.to_numeric(datos_h.iloc[:, ci], errors="coerce").values,
+                    "grado_rezago": datos_h.iloc[:, cg].astype(str).str.strip().str.capitalize().values}))
                 break
-    exigir(filas, "No pude leer ningún XLSX del ZIP del IRS. Se busca una fila con 'grado de rezago', "
-                  "'índice de rezago', 'municipio' y 'entidad'. Revisa y ajusta leer_irs().")
+    exigir(filas, "No pude leer ningún XLSX del ZIP del IRS. Se busca 'Clave entidad' y rótulos de municipio, "
+                  "índice y grado de rezago. Rótulos encontrados:\n" + "\n".join(vistos[:4]))
     out = pd.concat(filas)
     out["municipio_norm"] = out["municipio"].map(norm)
     return out.dropna(subset=["irs"])
@@ -197,9 +202,13 @@ BASE_ITER = ["ENTIDAD", "MUN", "NOM_MUN", "LOC", "NOM_LOC", "POBTOT", "VIVPAR_HA
 RURAL_MENOS_DE = 2500   # habitantes: criterio habitual de INEGI para localidad rural
 
 
+def _limpia_col(c) -> str:
+    return str(c).replace("\ufeff", "").replace("ï»¿", "").strip().upper()
+
+
 def leer_iter(datos: bytes) -> pd.DataFrame:
     """ZIP del ITER -> localidades de la península (sin renglones de totales) con ámbito rural/urbano."""
-    pedidas = set(BASE_ITER) | set(INDICADORES_ITER.values())
+    pedidas = set(BASE_ITER) | set(INDICADORES_ITER.values()) | {"TVIVPARHAB"}   # TVIVPARHAB: base real de los VPH_*
     with zipfile.ZipFile(io.BytesIO(datos)) as z:
         info = max((i for i in z.infolist() if i.filename.lower().endswith(".csv")), key=lambda i: i.file_size)
         for enc in ("utf-8-sig", "latin-1"):
@@ -207,19 +216,22 @@ def leer_iter(datos: bytes) -> pd.DataFrame:
                 partes = []
                 with z.open(info) as f:
                     for ch in pd.read_csv(f, dtype=str, encoding=enc, chunksize=200_000, na_values=["*", "N/D"],
-                                          usecols=lambda c: c.strip().upper() in pedidas):
-                        ch.columns = [c.strip().upper() for c in ch.columns]
+                                          usecols=lambda c: _limpia_col(c) in pedidas):
+                        ch.columns = [_limpia_col(c) for c in ch.columns]
                         ch["ENTIDAD"] = pd.to_numeric(ch["ENTIDAD"], errors="coerce")
                         partes.append(ch[ch["ENTIDAD"].isin(comun.PENINSULA)])   # recorte a la península
                 break
             except UnicodeDecodeError:
                 continue
     df = pd.concat(partes, ignore_index=True)
-    faltan = sorted(pedidas - set(df.columns))
+    faltan = sorted(pedidas - {"TVIVPARHAB"} - set(df.columns))
     exigir(not faltan, f"El ITER no trae las columnas {faltan}. Revisa el diccionario de datos y ajusta "
                        "INDICADORES_ITER en plata.py.")
-    for c in ["POBTOT", "VIVPAR_HAB", *INDICADORES_ITER.values()]:
+    base = "TVIVPARHAB" if "TVIVPARHAB" in df.columns else "VIVPAR_HAB"
+    print(f"ITER: base de viviendas = {base}")
+    for c in ["POBTOT", "VIVPAR_HAB", base, *INDICADORES_ITER.values()]:
         df[c] = pd.to_numeric(df[c], errors="coerce")
+    df["VIV_BASE"] = df[base]
     df = df[pd.to_numeric(df["LOC"], errors="coerce") != 0].copy()     # fuera los renglones de totales
     df["entidad"] = df["ENTIDAD"].astype(int).map(comun.PENINSULA)
     df["ambito"] = df["POBTOT"].map(lambda p: None if pd.isna(p) else ("Rural" if p < RURAL_MENOS_DE else "Urbano"))
@@ -253,7 +265,6 @@ def construir() -> dict[str, pd.DataFrame]:
     tablas["5.bronce_archivos"] = pd.DataFrame(
         procedencia, columns=["dataset", "archivo", "fecha_obtencion", "origen", "sha256", "tamano_bytes"])
     tablas["5.educacion_05"] = leer_inegi_ancho(comun.archivo(fuentes["educacion_05"], ".xlsx"))
-    tablas["5.grado_1990"] = leer_grado_1990(comun.archivo(fuentes["censo_1990"], ".xlsx"))
     tablas["5.pobreza_municipal"] = limpia_pobreza(comun.archivo(fuentes["pobreza_municipal"], ".csv"))
     tablas["5.irs_municipal"] = leer_irs(comun.archivo(fuentes["irs_coneval"], ".zip"))
     tablas["5.iter_2020"] = leer_iter(comun.archivo(fuentes["iter_2020_yuc"], ".zip"))

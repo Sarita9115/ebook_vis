@@ -56,7 +56,13 @@ def ingerir() -> dict[str, str]:
             resultado[dataset] = "FALTA (subir a mano)"
             continue
         hoy = date.today().isoformat()
-        ruta, sha = _descargar(d["url"])
+        try:
+            ruta, sha = _descargar(d["url"])
+        except Exception as e:   # sitio que bloquea o no responde: se sigue con los demás
+            faltan.append(f"- {dataset}: no se pudo descargar ({e}). Bájalo en tu navegador desde {d['url']} "
+                          f"y súbelo a bronze/5/{dataset}/fecha={hoy}/{d['archivo']}")
+            resultado[dataset] = f"ERROR de descarga: {e}"
+            continue
         try:
             cliente.fput_object(comun.BUCKET, f"{comun.EQUIPO}/{dataset}/fecha={hoy}/{d['archivo']}", ruta,
                                 metadata={"fecha-obtencion": hoy, "origen": d["url"], "sha256": sha})
@@ -64,7 +70,7 @@ def ingerir() -> dict[str, str]:
             os.unlink(ruta)
         resultado[dataset] = f"descargado (fecha={hoy})"
     if faltan:
-        raise FileNotFoundError("Faltan archivos que no se descargan solos:\n" + "\n".join(faltan))
+        raise FileNotFoundError("Faltan archivos (no se descargan solos o el sitio los bloqueó):\n" + "\n".join(faltan))
     return resultado
 
 
