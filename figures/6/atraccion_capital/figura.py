@@ -19,6 +19,7 @@ Fuente primaria: Secretaría de Economía, inversión extranjera directa por ent
 Fuente secundaria: DENUE (INEGI), unidades económicas y personal ocupado estimado.
 """
 
+import math
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
@@ -37,6 +38,17 @@ def _n(x):
 def _mil(x):
     """Etiqueta corta para los paneles del DENUE: 146 384 -> "146 mil"."""
     return f"{x / 1000:,.0f} mil".replace(",", " ")
+
+
+def _ticks_mil(maximo):
+    """Marcas del eje y de los paneles del DENUE en "mil" (0, 50 mil, 100 mil... 1 millón)."""
+    bruto = maximo / 5
+    base = 10 ** math.floor(math.log10(bruto))
+    paso = next(m * base for m in (1, 2, 2.5, 5, 10) if m * base >= bruto)
+    vals = [i * paso for i in range(int(maximo // paso) + 1)]
+    texto = ["0" if v == 0 else (f"{v / 1e6:g} millón" if v == 1e6 else (f"{v / 1e6:g} millones" if v > 1e6 else _mil(v)))
+             for v in vals]
+    return vals, texto
 
 
 def _separar(valores, minimo):
@@ -124,5 +136,8 @@ def figura(datos) -> go.Figure:
                                  hovertemplate=f"%{{x}}: %{{y:,.0f}} {nombre}<extra></extra>", cliponaxis=False), row=2, col=col)
         fig.update_xaxes(tickmode="array", tickvals=list(s.index), showgrid=False, linecolor=TEXTO_2, tickfont=dict(size=11, color=TEXTO_2),
                          range=[s.index.min() - 0.6, s.index.max() + 0.6], row=2, col=col)
-        fig.update_yaxes(gridcolor=REJILLA, rangemode="tozero", tickfont=dict(size=11, color=TEXTO_2), range=[0, float(s.max()) * 1.18], row=2, col=col)
+        tope = float(s.max()) * 1.18
+        vals, texto = _ticks_mil(tope)
+        fig.update_yaxes(gridcolor=REJILLA, rangemode="tozero", tickfont=dict(size=11, color=TEXTO_2), range=[0, tope],
+                         tickmode="array", tickvals=vals, ticktext=texto, row=2, col=col)
     return fig
