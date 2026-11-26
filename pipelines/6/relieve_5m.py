@@ -53,10 +53,16 @@ Etapas (Airflow, dags/equipo_6.py):
 - `ingesta()`: el portal del MDE de INEGI no da un enlace directo por carta y
   Overture se descarga por consulta, así que estos crudos llegan a
   bronze/6/relieve_5m/ por la consola de MinIO o desde Drive:
-    1. si bronce ya tiene archivos del conjunto, se usan tal cual;
-    2. si no, se bajan con gdown del enlace de Drive en E6_GDRIVE_RELIEVE_5M
-       (carpeta, archivo o ID), o del `enlace` del catálogo si es de Drive.
-  El DENUE sí tiene enlace directo: si falta en bronce, se descarga del INEGI.
+    1. si bronce ya tiene el conjunto completo (todas las cartas en parejas
+       _ms/_mt y el parquet de Overture, en cualquier subcarpeta), se usa;
+    2. si no, se baja con gdown el enlace de Drive (`alm.fuente_drive`: el
+       `enlace` primario de catalog/catalog.csv, luego E6_GDRIVE_RELIEVE_5M y,
+       si el catálogo no está montado, `alm.DRIVE_RESPALDO`). Es el ZIP
+       data_8_y_9.zip: `cartas para s8 y s9/<carta>/conjunto_de_datos/*.xyz`,
+       `subtema8/edificios_merida.parquet` y `subtema9/` (con el DENUE de mayo
+       de 2026 en `denue 2026 yuc/denue_inegi_31_.csv`). Se abre y se sube.
+  El DENUE sí tiene enlace directo: si falta en bronce, se descarga del INEGI
+  (corte fechado de mayo de 2026).
 - `plata()`:   convierte cada XYZ a COG en raster/6/relieve_5m/ (si rasterio/GDAL
   están instalados), registra rutas y metadatos en plata."6.relieve_5m.raster"
   y carga la malla de 200 m en plata."6.relieve_5m.malla" (EPSG:32616) con sus
@@ -119,7 +125,9 @@ LOTE_PUNTOS = 250_000
 URLS = {
     "mde": "https://www.inegi.org.mx/app/geo2/elevacionesmex/",
     "overture": "https://docs.overturemaps.org/guides/buildings/",
-    "denue": "https://www.inegi.org.mx/contenidos/masiva/denue/denue_31_csv.zip",
+    # Corte fechado de mayo de 2026: `denue_31_csv.zip` (sin fecha) ya apunta al de
+    # noviembre de 2026, con otros encabezados y otras cifras.
+    "denue": "https://www.inegi.org.mx/contenidos/masiva/denue/2026_05/denue_31_0526_csv.zip",
 }
 
 FUENTE_PRIMARIA = (
@@ -301,7 +309,12 @@ def leer_denue_puntos(ruta: Path) -> gpd.GeoDataFrame:
         texto = crudo.decode("utf-8")
     except UnicodeDecodeError:
         texto = crudo.decode("latin-1")
-    df = pd.read_csv(io.StringIO(texto), dtype=str, usecols=["id", "cve_ent", "cve_mun", "latitud", "longitud"])
+    columnas = {"id", "cve_ent", "cve_mun", "latitud", "longitud"}
+    # El INEGI cambia entre minúsculas (mayo de 2026) y mayúsculas (noviembre de 2026).
+    df = pd.read_csv(io.StringIO(texto), dtype=str, usecols=lambda c: c.strip().lower() in columnas)
+    df.columns = [c.strip().lower() for c in df.columns]
+    if set(df.columns) != columnas:
+        raise ValueError(f"{ruta.name}: faltan columnas {sorted(columnas - set(df.columns))}")
     if set(df["cve_ent"].unique()) != {CVE_ENT_YUCATAN}:
         raise ValueError(f"{ruta.name}: trae entidades distintas de Yucatán")
     df["latitud"] = pd.to_numeric(df["latitud"], errors="coerce")
@@ -545,41 +558,100 @@ def registrar_raster(dir_cartas: Path, prefijo_bronce: str, fecha: str) -> pd.Da
 # Etapas del DAG (las reutiliza 6.huella_construida)
 # ---------------------------------------------------------------------------
 
+def revisar_bronce(prefijo_s3: str) -> dict:
+    """Qué trae una partición de bronce, sin bajarla.
+
+    Las cartas se buscan en cualquier subcarpeta (p. ej.
+    `data_8_y_9/cartas para s8 y s9/<carta>/conjunto_de_datos/*.xyz`) y se
+    emparejan por nombre de archivo, igual que `listar_cartas`.
+    """
+    objetos = alm.tamanos(prefijo_s3)
+    cartas: dict[str, set] = {}
+    vacios = []
+    for nombre, tam in objetos.items():
+        if (m := PATRON_XYZ.match(nombre.rsplit("/", 1)[-1])):
+            if tam == 0:
+                vacios.append(nombre)
+            else:
+                cartas.setdefault(m.group(1).upper(), set()).add(m.group(2).lower())
+    completas = sorted(c for c, t in cartas.items() if t == {"ms", "mt"})
+    relativos = {o[len(prefijo_s3):].lower(): tam for o, tam in objetos.items()}
+    return {
+        "cartas": completas,
+        "incompletas": sorted(set(cartas) - set(completas)),
+        "vacios": vacios,
+        "parquet": any(n.endswith(".parquet") and t > 0 for n, t in relativos.items()),
+        "denue": any("denue" in n and t > 0 and (n.endswith(".zip") or n.endswith("denue_inegi_31_.csv"))
+                     for n, t in relativos.items()),
+    }
+
+
+def _cartas_ok(r: dict) -> bool:
+    return bool(r["cartas"]) and not r["incompletas"] and not r["vacios"]
+
+
+def _bajar_drive(dataset: str, origen: str, p: str) -> None:
+    log.info("%s: descargo de Drive %s -> s3://%s/%s", dataset, origen, alm.BUCKET_BRONZE, p)
+    with alm.carpeta_temporal() as tmp:
+        alm.descargar_drive(origen, tmp)
+        alm.extraer_zips(tmp)
+        alm.subir_carpeta(tmp, p)
+
+
 def ingesta_conjunto(dataset: str, fecha: str | None = None, carpeta_local: str | Path | None = None,
                      respaldo: str | None = None) -> str:
-    """Deja en bronce cartas MDE, huellas de Overture y DENUE de un conjunto.
+    """Deja en bronce cartas MDE, huellas de Overture y DENUE de un conjunto y
+    devuelve el prefijo de bronce que debe leer `plata`.
 
     Orden: (0) si se pidió explícitamente, la carpeta local (argumento o
-    E6_CRUDOS_<DATASET>); (1) lo que ya esté en bronze/6/<dataset>/;
-    (2) Drive vía gdown; (3) la partición vigente del conjunto `respaldo`.
+    E6_CRUDOS_<DATASET>); (1) lo que ya esté en bronze/6/<dataset>/, solo si
+    está completo; (2) Drive vía gdown (`alm.fuente_drive`).
+
+    Completo quiere decir: huellas de Overture (*.parquet no vacío) y, si el
+    conjunto no tiene `respaldo`, todas las cartas en parejas _ms/_mt. Con
+    `respaldo` (6.huella_construida, cuyo Drive solo trae el parquet), si la
+    partición propia no trae cartas se devuelve la partición vigente del
+    conjunto `respaldo` (las mismas fuentes), siempre que esté completa.
     El DENUE tiene enlace directo: si falta, se descarga del INEGI.
     """
     local = alm.carpeta_local(dataset, carpeta_local)
     if local is not None:
         p = alm.ingestar_carpeta_local(dataset, local, fecha)
-    elif p := alm.prefijo_vigente(dataset):
-        log.info("%s: uso lo que ya está en bronce (%s)", dataset, p)
-    elif origen := alm.fuente_drive(dataset):
-        p = alm.prefijo(dataset, fecha or alm.hoy())
-        with alm.carpeta_temporal() as tmp:
-            alm.descargar_drive(origen, tmp)
-            alm.extraer_zips(tmp)
-            alm.subir_carpeta(tmp, p)
-    elif respaldo and (p := alm.prefijo_vigente(respaldo)):
-        log.info("%s: uso los crudos de %s (%s)", dataset, respaldo, p)
     else:
-        raise FileNotFoundError(
-            f"No hay crudos de {dataset} en s3://{alm.BUCKET_BRONZE}/{alm.prefijo(dataset)} ni enlace de "
-            f"Drive. Súbelos por la consola de MinIO o define E6_GDRIVE_{dataset.upper()}."
-        )
+        p = alm.prefijo_vigente(dataset)
+        r = revisar_bronce(p) if p else None
+        completo = r is not None and r["parquet"] and (respaldo is not None or _cartas_ok(r))
+        if completo:
+            log.info("%s: uso lo que ya está en bronce (%s): %d cartas, parquet=%s",
+                     dataset, p, len(r["cartas"]), r["parquet"])
+        elif origen := alm.fuente_drive(dataset):
+            if p:
+                log.warning("%s: %s está incompleto (%s); se baja de nuevo desde Drive", dataset, p, r)
+            p = alm.prefijo(dataset, fecha or alm.hoy())  # partición de esta corrida: fecha de obtención real
+            _bajar_drive(dataset, origen, p)
+        elif not (respaldo and alm.prefijo_vigente(respaldo)):
+            raise FileNotFoundError(
+                f"No hay crudos completos de {dataset} en s3://{alm.BUCKET_BRONZE}/{alm.prefijo(dataset)} ni "
+                f"enlace de Drive en catalog/catalog.csv o E6_GDRIVE_{dataset.upper()}."
+            )
 
-    objetos = [o.lower() for o in alm.listar(p)]
-    if not any("denue" in o for o in objetos):
-        alm.completar_urls(p + "denue/", {Path(URLS["denue"]).name: URLS["denue"]})
-    if not any(o.endswith(".xyz") for o in objetos):
+    r = revisar_bronce(p) if p else {"cartas": [], "incompletas": [], "vacios": [], "parquet": False,
+                                      "denue": False}
+    if not _cartas_ok(r) and respaldo:
+        q = alm.prefijo_vigente(respaldo)
+        rq = revisar_bronce(q) if q else None
+        if rq and _cartas_ok(rq) and rq["parquet"]:
+            log.info("%s: %s no trae cartas MDE; plata usa los crudos de %s (%s)", dataset, p, respaldo, q)
+            p, r = q, rq
+    if r["incompletas"] or r["vacios"]:
+        raise FileNotFoundError(f"{p}: cartas sin pareja MDS/MDT {r['incompletas']} o vacías {r['vacios']}")
+    if not r["cartas"]:
         raise FileNotFoundError(f"{p} no tiene cartas *_ms.xyz / *_mt.xyz")
-    if not any(o.endswith(".parquet") for o in objetos):
+    if not r["parquet"]:
         raise FileNotFoundError(f"{p} no tiene las huellas de Overture (*.parquet)")
+    if not r["denue"]:
+        alm.completar_urls(p + "denue/", {Path(URLS["denue"]).name: URLS["denue"]}, validar=True)
+    log.info("%s: bronce listo en %s (%d cartas)", dataset, p, len(r["cartas"]))
     return p
 
 

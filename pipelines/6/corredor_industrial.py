@@ -4,13 +4,16 @@ Concentración industrial en el corredor Mérida, Umán y Hunucmá.
 
 Fuentes (todas de Yucatán, clave 31; el DENUE nacional no se usa):
 
-- Primaria: DENUE, corte de mayo de 2026, Yucatán (denue_31_csv.zip, INEGI).
+- Primaria: DENUE, corte de mayo de 2026, Yucatán (INEGI, URL fechada):
+  https://www.inegi.org.mx/contenidos/masiva/denue/2026_05/denue_31_0526_csv.zip
 - Secundaria: DENUE Yucatán, cortes de noviembre de 2018, 2019 y 2020:
   https://www.inegi.org.mx/contenidos/masiva/denue/{AAAA}_11/denue_31_11{AA}_csv.zip
 - Secundaria: Encuesta Intercensal 2025, población por municipio de Yucatán
   (eic2025_poblacion_31.xlsx, hoja 02).
 - Límites: División política municipal 2023 (INEGI, vía CONABIO, mun23gw.zip),
-  que es el Marco Geoestadístico municipal en un archivo descargable.
+  que es el Marco Geoestadístico municipal en un archivo descargable. Si
+  CONABIO no responde, el Marco Geoestadístico 2023 de Yucatán directo del
+  INEGI (31_yucatan.zip, capa conjunto_de_datos/31mun): mismo trazo.
 
 Lo que se sabe de los crudos (verificado al abrirlos):
 
@@ -32,16 +35,20 @@ La tabla de oro es un GeoDataFrame en EPSG:4326, en formato largo con `capa`:
 Etapas (Airflow, dags/equipo_6.py):
 
 - `ingesta()`: descarga los cuatro DENUE de Yucatán, la Intercensal 2025 y
-  mun23gw.zip a bronze/6/corredor_industrial/fecha=AAAA-MM-DD/. Un DENUE
+  los límites a bronze/6/corredor_industrial/fecha=AAAA-MM-DD/. Si la
+  partición ya existe, valida cada archivo en MinIO y vuelve a bajar los que
+  falten o no sirvan (p. ej. una página HTML guardada como .zip). Un DENUE
   que traiga entidades distintas de Yucatán se rechaza al pasar a plata.
 - `plata()`:   carga plata."6.corredor_industrial.denue" (manufactura y
   transporte con 11 o más personas, puntos en EPSG:32616),
   ".poblacion" y ".municipios" (los tres del corredor, EPSG:32616).
 - `oro()`:     agrega desde plata y carga oro."6.corredor_industrial".
 
-Nota: `denue_31_csv.zip` es el corte vigente del INEGI. El catálogo se fijó
-con el de mayo de 2026; si el INEGI ya publicó otro, la cifra puede moverse
-y la validación lo señalará.
+Nota: `denue_31_csv.zip` (sin fecha) es el corte vigente del INEGI y cambia
+con cada publicación: desde el 21/11/2026 es el de noviembre de 2026, con los
+encabezados en mayúsculas. Por eso se usa la URL fechada del corte de mayo de
+2026, con el que se fijó el valor del catálogo. El INEGI responde 200 con una
+página HTML cuando un archivo no existe; `alm.descargar_url` lo rechaza.
 
 Prueba local (opcional y explícita): `ingesta(carpeta_local=...)` o la variable
 E6_CRUDOS_CORREDOR_INDUSTRIAL suben una carpeta de crudos a bronce en vez de
@@ -54,6 +61,8 @@ from __future__ import annotations
 import datetime as dt
 import importlib.util
 import io
+import logging
+import re
 import sys
 import zipfile
 from pathlib import Path
@@ -73,6 +82,7 @@ def _cargar_almacen():
 
 
 alm = _cargar_almacen()
+log = logging.getLogger("equipo6.corredor_industrial")
 
 VIZ_ID = "6.corredor_industrial"
 DATASET = "corredor_industrial"
@@ -89,18 +99,26 @@ CORTES = {
     2026: "denue_31_0526_csv.zip",
 }
 ANIO_ACTUAL = 2026
-CORTE_VIGENTE = "denue_31_csv.zip"  # nombre con el que el INEGI publica el corte actual
 CSV_EN_ZIP = "conjunto_de_datos/denue_inegi_31_.csv"
+COLUMNAS_DENUE = {"id", "codigo_act", "per_ocu", "cve_ent", "cve_mun", "latitud", "longitud"}
 EIC = "eic2025_poblacion_31.xlsx"
+MUN23 = "mun23gw.zip"
+MG2023 = "mg2023_31_yucatan.zip"  # nombre en bronce del ZIP del Marco Geoestadístico 2023
 
 URLS = {
     2018: "https://www.inegi.org.mx/contenidos/masiva/denue/2018_11/denue_31_1118_csv.zip",
     2019: "https://www.inegi.org.mx/contenidos/masiva/denue/2019_11/denue_31_1119_csv.zip",
     2020: "https://www.inegi.org.mx/contenidos/masiva/denue/2020_11/denue_31_1120_csv.zip",
-    2026: "https://www.inegi.org.mx/contenidos/masiva/denue/denue_31_csv.zip",
+    # Corte fechado: denue_31_csv.zip (sin fecha) es el corte vigente y desde el
+    # 21/11/2026 ya es el de noviembre de 2026 (encabezados en mayúsculas, otras cifras).
+    2026: "https://www.inegi.org.mx/contenidos/masiva/denue/2026_05/denue_31_0526_csv.zip",
     "eic": "https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_31.xlsx",
     "mun23": "http://www.conabio.gob.mx/informacion/gis/maps/geo/mun23gw.zip",
+    # Respaldo de los límites: mismo trazo que mun23gw (verificado), directo del INEGI.
+    "mg2023": ("https://www.inegi.org.mx/contenidos/productos/prod_serv/contenidos/espanol/bvinegi/"
+               "productos/geografia/marcogeo/794551067314/31_yucatan.zip"),
 }
+LIMITES = {MUN23: URLS["mun23"], MG2023: URLS["mg2023"]}  # en orden de preferencia
 
 FUENTE_PRIMARIA = "INEGI: DENUE, corte de mayo de 2026, Yucatán"
 FUENTE_SECUNDARIA = (
@@ -127,7 +145,11 @@ TOLERANCIA_CONTORNO_M = 60
 
 
 def leer_denue(ruta_zip: Path) -> pd.DataFrame:
-    """Lee el CSV del ZIP por entidad; detecta UTF-8 o Latin-1."""
+    """Lee el CSV del ZIP por entidad; detecta UTF-8 o Latin-1.
+
+    Los encabezados se pasan a minúsculas: el INEGI los publica en minúsculas
+    (2018 a mayo de 2026) o en mayúsculas (noviembre de 2026).
+    """
     with zipfile.ZipFile(ruta_zip) as zf:
         crudo = zf.read(CSV_EN_ZIP)
     try:
@@ -136,7 +158,8 @@ def leer_denue(ruta_zip: Path) -> pd.DataFrame:
     except UnicodeDecodeError:
         codificacion = "latin-1"
     df = pd.read_csv(io.BytesIO(crudo), dtype=str, encoding=codificacion)
-    faltan = {"codigo_act", "per_ocu", "cve_ent", "cve_mun", "latitud", "longitud"} - set(df.columns)
+    df.columns = [c.strip().lower() for c in df.columns]
+    faltan = COLUMNAS_DENUE - set(df.columns)
     if faltan:
         raise ValueError(f"{ruta_zip.name}: faltan columnas {sorted(faltan)}")
     if set(df["cve_ent"].unique()) != {CVE_ENT_YUCATAN}:
@@ -171,10 +194,57 @@ def leer_poblacion(ruta: Path) -> pd.Series:
 
 
 def _archivo_corte(dir_crudos: Path, anio: int) -> Path:
-    ruta = dir_crudos / CORTES[anio]
-    if not ruta.exists() and anio == ANIO_ACTUAL and (dir_crudos / CORTE_VIGENTE).exists():
-        ruta = dir_crudos / CORTE_VIGENTE
-    return ruta
+    return dir_crudos / CORTES[anio]
+
+
+def ruta_limites(dir_crudos: Path) -> Path:
+    """mun23gw.shp (CONABIO) o, si no está, 31mun.shp del Marco Geoestadístico 2023."""
+    return (alm.buscar(dir_crudos, "mun23gw.shp", requerido=False)
+            or alm.buscar(dir_crudos, "31mun.shp"))
+
+
+# ---------------------------------------------------------------------------
+# Validación de crudos (antes de dar por buena una partición de bronce)
+# ---------------------------------------------------------------------------
+
+def validar_denue(ruta: Path) -> None:
+    alm.validar_archivo(ruta)
+    with zipfile.ZipFile(ruta) as zf:
+        if CSV_EN_ZIP not in zf.namelist():
+            raise ValueError(f"{ruta.name}: no trae {CSV_EN_ZIP}")
+        with zf.open(CSV_EN_ZIP) as f:
+            cabecera = f.readline().decode("latin-1")
+    columnas = {c.strip().strip('"').lower() for c in cabecera.split(",")}
+    if faltan := COLUMNAS_DENUE - columnas:
+        raise ValueError(f"{ruta.name}: faltan columnas {sorted(faltan)}")
+
+
+def validar_eic(ruta: Path) -> None:
+    alm.validar_archivo(ruta)
+    if "02" not in pd.ExcelFile(ruta).sheet_names:
+        raise ValueError(f"{ruta.name}: no trae la hoja 02")
+
+
+def validar_limites(ruta: Path) -> None:
+    alm.validar_archivo(ruta)
+    with zipfile.ZipFile(ruta) as zf:
+        nombres = {n.lower() for n in zf.namelist()}
+    base = "mun23gw" if ruta.name == MUN23 else "conjunto_de_datos/31mun"
+    if faltan := [e for e in (".shp", ".shx", ".dbf") if base + e not in nombres]:
+        raise ValueError(f"{ruta.name}: faltan {[base + e for e in faltan]}")
+
+
+def validar_crudo(ruta: Path) -> None:
+    """Valida un crudo de bronce según su nombre; lanza excepción si no sirve."""
+    nombre = Path(ruta).name
+    if nombre.startswith("denue_"):
+        validar_denue(ruta)
+    elif nombre == EIC:
+        validar_eic(ruta)
+    elif nombre in LIMITES:
+        validar_limites(ruta)
+    else:
+        alm.validar_archivo(ruta)
 
 
 def construir_plata(dir_crudos: Path, ruta_municipios: Path | None = None,
@@ -196,8 +266,9 @@ def construir_plata(dir_crudos: Path, ruta_municipios: Path | None = None,
 
     poblacion = leer_poblacion(dir_crudos / EIC).rename("poblacion_2025").rename_axis("grupo").reset_index()
 
-    ruta_municipios = Path(ruta_municipios) if ruta_municipios else alm.buscar(dir_crudos, "mun23gw.shp")
-    mun = gpd.read_file(ruta_municipios, encoding="utf-8")
+    ruta_municipios = Path(ruta_municipios) if ruta_municipios else ruta_limites(dir_crudos)
+    # mun23gw viene en UTF-8 sin .cpg; el Marco Geoestadístico declara su codificación en .cpg.
+    mun = gpd.read_file(ruta_municipios, **({"encoding": "utf-8"} if ruta_municipios.stem == "mun23gw" else {}))
     mun = mun[(mun["CVE_ENT"] == CVE_ENT_YUCATAN) & mun["CVE_MUN"].isin(CORREDOR)].to_crs(CRS_TRABAJO)
     if len(mun) != len(CORREDOR):
         raise ValueError("No se encontraron los tres municipios del corredor")
@@ -289,26 +360,51 @@ def valor_referencia(oro: pd.DataFrame) -> float:
 # Etapas del DAG
 # ---------------------------------------------------------------------------
 
+def _completar_limites(destino: str) -> None:
+    """Deja en bronce un ZIP de límites municipales válido: mun23gw.zip (CONABIO)
+    o, si CONABIO no responde, el Marco Geoestadístico 2023 del INEGI."""
+    malos = alm.invalidos_en_bronce(destino, LIMITES, validar_crudo)
+    if len(malos) < len(LIMITES):
+        return  # al menos uno ya está y es válido
+    errores = []
+    for nombre, url in LIMITES.items():
+        try:
+            alm.completar_urls(destino, {nombre: url}, validar=validar_crudo)
+            return
+        except Exception as error:
+            log.warning("No se pudo bajar %s de %s: %s", nombre, url, error)
+            errores.append(f"{url}: {type(error).__name__}: {error}")
+    raise RuntimeError("No se pudieron obtener los límites municipales: " + " | ".join(errores))
+
+
 def ingesta(fecha: str | None = None, carpeta_local: str | Path | None = None) -> str:
-    """Fuentes con enlace directo -> bronce.
+    """Fuentes con enlace directo -> bronce/6/corredor_industrial/fecha=AAAA-MM-DD/.
+
+    Aunque la partición `fecha=` ya exista, cada archivo esperado (cuatro DENUE,
+    la Intercensal y los límites) se baja de MinIO y se valida: ZIP o XLSX
+    íntegro, el CSV del DENUE con sus columnas, la hoja 02 de la Intercensal y
+    el shapefile completo. Lo que falta o no sirve se borra y se descarga de
+    nuevo; una página HTML en lugar del archivo hace fallar la ingesta.
 
     Si se da una carpeta de crudos (argumento o E6_CRUDOS_CORREDOR_INDUSTRIAL),
-    se sube esa carpeta y solo se descarga lo que le falte.
+    se sube esa carpeta y se aplica la misma revisión.
     """
-    urls = {Path(URLS[k]).name: URLS[k] for k in (*CORTES, "eic", "mun23")}
+    urls = {Path(URLS[k]).name: URLS[k] for k in CORTES}
+    urls[EIC] = URLS["eic"]
     local = alm.carpeta_local(DATASET, carpeta_local)
-    if local is None:
-        return alm.ingestar_urls(DATASET, urls, fecha)
-    destino = alm.ingestar_carpeta_local(DATASET, local, fecha)
-    if (local / CORTES[ANIO_ACTUAL]).exists():  # el corte fechado sustituye al vigente
-        urls.pop(CORTE_VIGENTE)
-    alm.completar_urls(destino, urls)
+    destino = (alm.ingestar_carpeta_local(DATASET, local, fecha) if local is not None
+               else alm.prefijo(DATASET, fecha or alm.hoy()))
+    descargados = alm.completar_urls(destino, urls, validar=validar_crudo)
+    _completar_limites(destino)
+    log.info("%s: bronce verificado en %s (descargados de nuevo: %s)", DATASET, destino, descargados or "ninguno")
     return destino
 
 
 def plata(prefijo: str | None = None) -> int:
     """Bronce -> plata."6.corredor_industrial.*"."""
-    with alm.crudos(DATASET, prefijo, filtro=r"\.(zip|xlsx)$", bajar_zips=True) as (carpeta, fecha):
+    nombres = [*CORTES.values(), EIC, *LIMITES]
+    filtro = "^(" + "|".join(re.escape(n) for n in nombres) + ")$"
+    with alm.crudos(DATASET, prefijo, filtro=filtro, bajar_zips=True) as (carpeta, fecha):
         tablas = construir_plata(carpeta, None, fecha)
     alm.cargar({TABLAS_PLATA[k]: t for k, t in tablas.items()}, alm.ESQUEMA_PLATA)
     return sum(len(t) for t in tablas.values())

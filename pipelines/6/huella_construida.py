@@ -28,9 +28,11 @@ La tabla de oro es un DataFrame en formato largo con `capa`:
 Etapas (Airflow, dags/equipo_6.py):
 
 - `ingesta()`: igual que 6.relieve_5m, sobre bronze/6/huella_construida/.
-  Usa lo que ya esté en bronce o lo baja de Drive (E6_GDRIVE_HUELLA_CONSTRUIDA);
-  si no hay ninguno de los dos, reutiliza la partición vigente de
-  bronze/6/relieve_5m/ (son las mismas fuentes).
+  Deja ahí la fuente primaria, las huellas de Overture (edificios_merida.parquet),
+  bajándolas del enlace de Drive (`alm.fuente_drive`) si no están. Ese enlace
+  solo trae el parquet: las cartas MDE y el DENUE se toman de la partición
+  vigente de bronze/6/relieve_5m/ (mismas fuentes; su parquet es idéntico), y
+  ese es el prefijo que recibe `plata()`. Por eso relieve_5m corre antes.
 - `plata()`:   toma la malla de plata."6.relieve_5m.malla" (si no existe, la
   arma desde bronce) y carga sus celdas urbanas en
   plata."6.huella_construida.celdas_urbanas".
