@@ -34,6 +34,11 @@ def _n(x):
     return f"{x:,.0f}".replace(",", " ")
 
 
+def _mil(x):
+    """Etiqueta corta para los paneles del DENUE: 146 384 -> "146 mil"."""
+    return f"{x / 1000:,.0f} mil".replace(",", " ")
+
+
 def _separar(valores, minimo):
     orden = sorted(valores, key=valores.get)
     pos = {k: valores[k] for k in orden}
@@ -115,7 +120,7 @@ def figura(datos) -> go.Figure:
             continue
         fig.add_trace(go.Scatter(x=s.index, y=s.values, mode="lines+markers+text", showlegend=False,
                                  line=dict(color=TERRACOTA, width=3), marker=dict(size=9, color=TERRACOTA, line=dict(color="white", width=1.5)),
-                                 text=[_n(v) for v in s.values], textposition="top center", textfont=dict(size=11, color=TEXTO_2),
+                                 text=[_mil(v) for v in s.values], textposition="top center", textfont=dict(size=11, color=TEXTO_2),
                                  hovertemplate=f"%{{x}}: %{{y:,.0f}} {nombre}<extra></extra>", cliponaxis=False), row=2, col=col)
         fig.update_xaxes(tickmode="array", tickvals=list(s.index), showgrid=False, linecolor=TEXTO_2, tickfont=dict(size=11, color=TEXTO_2),
                          range=[s.index.min() - 0.6, s.index.max() + 0.6], row=2, col=col)
