@@ -19,6 +19,8 @@ Variables de entorno:
     E6_CRUDOS_<DATASET>   solo pruebas: carpeta de crudos que la ingesta sube a
                           bronce en vez de descargar (no hay ruta por omisión)
     CATALOG_CSV           ruta de catalog/catalog.csv (opcional)
+    E6_GDRIVE_<DATASET>   enlace o ID de Drive si el catálogo no trae uno (opcional);
+                          ver `fuente_drive()`
 
 La carpeta "6" no es un paquete de Python: los pipelines cargan este archivo
 por ruta y queda registrado como `e6_almacen`.
@@ -74,8 +76,49 @@ def carpeta_temporal(prefijo: str = "e6_"):
         shutil.rmtree(ruta, ignore_errors=True)
 
 
+_SUFIJOS_ZIP = {".zip", ".xlsx", ".docx"}
+
+
+def validar_archivo(ruta: Path) -> Path:
+    """Revisa que un crudo sea lo que dice su extensión; lanza ValueError si no.
+
+    Algunos portales (el INEGI entre ellos) responden 200 con una página HTML
+    cuando el archivo no existe, así que el código HTTP no basta:
+
+    - vacío o página HTML -> inválido (cualquier extensión);
+    - .zip / .xlsx -> ZIP legible (índice central íntegro);
+    - .parquet -> firma PAR1 al inicio y al final.
+    """
+    ruta = Path(ruta)
+    tam = ruta.stat().st_size if ruta.exists() else 0
+    if tam == 0:
+        raise ValueError(f"{ruta.name}: archivo vacío o inexistente")
+    with open(ruta, "rb") as f:
+        inicio = f.read(512)
+        if tam >= 4:
+            f.seek(-4, os.SEEK_END)
+        final = f.read(4)
+    cabeza = inicio.lstrip(b"\xef\xbb\xbf \t\r\n").lower()
+    if cabeza.startswith((b"<!doctype html", b"<html")):
+        raise ValueError(f"{ruta.name}: es una página HTML, no el archivo esperado")
+    sufijo = ruta.suffix.lower()
+    if sufijo in _SUFIJOS_ZIP:
+        if not zipfile.is_zipfile(ruta):
+            raise ValueError(f"{ruta.name}: no es un ZIP válido")
+        with zipfile.ZipFile(ruta) as zf:
+            if not zf.namelist():
+                raise ValueError(f"{ruta.name}: ZIP sin contenido")
+    elif sufijo == ".parquet" and not (inicio[:4] == b"PAR1" and final == b"PAR1"):
+        raise ValueError(f"{ruta.name}: no es un Parquet válido")
+    return ruta
+
+
 def descargar_url(url: str, destino: Path, timeout: int = 120) -> Path:
-    """Descarga un archivo por HTTP(S) en streaming, sin cargarlo en memoria."""
+    """Descarga un archivo por HTTP(S) en streaming, sin cargarlo en memoria.
+
+    Al terminar valida el contenido (`validar_archivo`): una página HTML o un
+    archivo vacío no llegan a bronce.
+    """
     import requests
 
     destino = Path(destino)
@@ -89,24 +132,55 @@ def descargar_url(url: str, destino: Path, timeout: int = 120) -> Path:
             for bloque in r.iter_content(chunk_size=1 << 20):
                 f.write(bloque)
     parcial.replace(destino)
+    try:
+        validar_archivo(destino)
+    except ValueError as error:
+        destino.unlink(missing_ok=True)
+        raise ValueError(f"{url} no devolvió un archivo válido: {error}") from None
     log.info("  %s (%.1f MB)", destino.name, destino.stat().st_size / 1e6)
     return destino
 
 
+_PATRONES_ID_DRIVE = (
+    re.compile(r"/file/d/([-\w]{10,})"),
+    re.compile(r"/folders/([-\w]{10,})"),
+    re.compile(r"[?&]id=([-\w]{10,})"),
+)
+
+
+def id_drive(origen: str) -> str:
+    """ID de Google Drive a partir de una URL (`/file/d/<id>/view?usp=sharing`,
+    `/folders/<id>`, `?id=<id>`) o del ID suelto."""
+    origen = origen.strip()
+    for patron in _PATRONES_ID_DRIVE:
+        if m := patron.search(origen):
+            return m.group(1)
+    if re.fullmatch(r"[-\w]{10,}", origen):
+        return origen
+    raise ValueError(f"No se reconoce un ID de Google Drive en {origen!r}")
+
+
 def descargar_drive(origen: str, destino: Path) -> Path:
-    """Descarga de Google Drive con gdown. `origen` es URL de archivo, de carpeta o un ID."""
+    """Descarga de Google Drive con gdown. `origen` es URL de archivo, de carpeta o un ID.
+
+    Se extrae el ID y se pasa a gdown como `id=`: así funciona igual con
+    gdown 5.x y 6.x (la 6 ya no acepta `fuzzy=`). Cada archivo bajado se valida.
+    """
     import gdown
 
     destino = Path(destino)
     destino.mkdir(parents=True, exist_ok=True)
+    ident = id_drive(origen)
     if "/folders/" in origen:
-        gdown.download_folder(url=origen, output=str(destino), quiet=False, use_cookies=False)
+        salida = gdown.download_folder(id=ident, output=str(destino), quiet=False, use_cookies=False)
+        archivos = [Path(s) for s in (salida or [])]
     else:
-        es_url = origen.startswith("http")
-        salida = gdown.download(url=origen if es_url else None, id=None if es_url else origen,
-                                output=str(destino) + os.sep, quiet=False, fuzzy=True)
-        if not salida:
-            raise RuntimeError(f"gdown no pudo descargar {origen}")
+        s = gdown.download(id=ident, output=str(destino) + os.sep, quiet=False, use_cookies=False)
+        archivos = [Path(s)] if s else []
+    if not archivos:
+        raise RuntimeError(f"gdown no pudo descargar {origen} (¿el enlace es público?)")
+    for a in archivos:
+        validar_archivo(a)
     return destino
 
 
@@ -162,6 +236,15 @@ def listar(prefijo_s3: str, bucket: str = BUCKET_BRONZE) -> list[str]:
         return []
     return [o.object_name for o in cliente.list_objects(bucket, prefix=prefijo_s3, recursive=True)
             if not o.is_dir]
+
+
+def tamanos(prefijo_s3: str, bucket: str = BUCKET_BRONZE) -> dict[str, int]:
+    """Objeto -> tamaño en bytes bajo un prefijo."""
+    cliente = minio()
+    if not cliente.bucket_exists(bucket):
+        return {}
+    return {o.object_name: o.size or 0
+            for o in cliente.list_objects(bucket, prefix=prefijo_s3, recursive=True) if not o.is_dir}
 
 
 def prefijo_vigente(dataset: str, bucket: str = BUCKET_BRONZE) -> str | None:
@@ -233,15 +316,68 @@ def ingestar_urls(dataset: str, urls: dict[str, str], fecha: str | None = None,
     return destino_s3
 
 
-def completar_urls(prefijo_s3: str, urls: dict[str, str], abrir_zips: bool = True) -> list[str]:
-    """Descarga a `prefijo_s3` solo los archivos de `urls` que todavía no están ahí."""
+def borrar(nombres: list[str], bucket: str = BUCKET_BRONZE) -> None:
+    cliente = minio()
+    for nombre in nombres:
+        cliente.remove_object(bucket, nombre)
+
+
+def invalidos_en_bronce(prefijo_s3: str, nombres, validar=None) -> dict[str, str]:
+    """Archivos de `nombres` que faltan en `prefijo_s3` o no pasan la validación.
+
+    Cada archivo presente se baja de MinIO y se revisa con `validar(ruta)`
+    (por omisión `validar_archivo`), que lanza excepción si no sirve.
+    Devuelve nombre -> motivo.
+    """
+    validar = validar or validar_archivo
     presentes = {o[len(prefijo_s3):] for o in listar(prefijo_s3)}
-    faltan = {n: u for n, u in urls.items() if n not in presentes}
+    malos = {}
+    cliente = minio()
+    with carpeta_temporal("e6_val_") as tmp:
+        for nombre in nombres:
+            if nombre not in presentes:
+                malos[nombre] = "no está en bronce"
+                continue
+            ruta = tmp / nombre
+            cliente.fget_object(BUCKET_BRONZE, prefijo_s3 + nombre, str(ruta))
+            try:
+                validar(ruta)
+            except Exception as error:  # cualquier fallo de lectura invalida el archivo
+                malos[nombre] = f"{type(error).__name__}: {error}"
+            finally:
+                ruta.unlink(missing_ok=True)
+    return malos
+
+
+def completar_urls(prefijo_s3: str, urls: dict[str, str], abrir_zips: bool = True,
+                   validar=None) -> list[str]:
+    """Descarga a `prefijo_s3` los archivos de `urls` que todavía no están ahí.
+
+    Con `validar` (función que recibe la ruta y lanza excepción si el archivo no
+    sirve; `True` usa `validar_archivo`), los que ya están en bronce también se
+    bajan y revisan: los inválidos se borran junto con la carpeta donde se
+    abrió su ZIP y se vuelven a descargar.
+    """
+    if validar:
+        malos = invalidos_en_bronce(prefijo_s3, urls, None if validar is True else validar)
+        for nombre, motivo in malos.items():
+            log.warning("%s%s: %s; se descarga de nuevo", prefijo_s3, nombre, motivo)
+        viejos = [o for o in listar(prefijo_s3)
+                  for n in malos
+                  if o == prefijo_s3 + n or (n.endswith(".zip") and o.startswith(prefijo_s3 + n[:-4] + "/"))]
+        if viejos:
+            borrar(viejos)
+        faltan = {n: urls[n] for n in malos}
+    else:
+        presentes = {o[len(prefijo_s3):] for o in listar(prefijo_s3)}
+        faltan = {n: u for n, u in urls.items() if n not in presentes}
     if not faltan:
         return []
     with carpeta_temporal() as tmp:
         for nombre, url in faltan.items():
             descargar_url(url, tmp / nombre)
+            if validar and validar is not True:
+                validar(tmp / nombre)
         if abrir_zips:
             extraer_zips(tmp)
         subir_carpeta(tmp, prefijo_s3)
@@ -326,16 +462,38 @@ def resumen_bronce(dataset: str) -> dict | None:
             "peso_mb": round(sum(o.size or 0 for o in objetos) / 1e6, 1)}
 
 
+# Copia de los enlaces de Drive de las filas primarias de catalog/catalog.csv,
+# solo para cuando el catálogo no está montado en el contenedor durante la ingesta.
+DRIVE_RESPALDO = {
+    # ZIP data_8_y_9.zip: 30 cartas XYZ del MDE, subtema8/edificios_merida.parquet y subtema9/
+    "relieve_5m": "https://drive.google.com/file/d/1HNZ5O0e4mtFta-PVj-zyXRKGMt3bWoPD/view?usp=sharing",
+    # Overture Buildings: edificios_merida.parquet
+    "huella_construida": "https://drive.google.com/file/d/1LKFyAGpaNlmJ0NaimJpTeCR7GPoUVOGU/view?usp=sharing",
+}
+
+
 def fuente_drive(dataset: str) -> str | None:
-    """Enlace de Drive para un conjunto: variable `E6_GDRIVE_<DATASET>` o, si alguna
-    fila del catálogo de ese viz_id tiene un `enlace` de drive.google.com, ese enlace."""
+    """Enlace de Drive para un conjunto, en este orden:
+
+    1. el `enlace` de drive.google.com de una fila de catalog/catalog.csv de ese
+       viz_id (la primaria primero);
+    2. la variable `E6_GDRIVE_<DATASET>`;
+    3. `DRIVE_RESPALDO`, si el catálogo no se encontró.
+    """
+    try:
+        filas = [f for f in filas_catalogo()
+                 if f["viz_id"] == f"{EQUIPO}.{dataset}" and "drive.google.com" in (f.get("enlace") or "")]
+        sin_catalogo = False
+    except FileNotFoundError:
+        log.warning("No se encontró catalog/catalog.csv; se usa el enlace de respaldo de %s", dataset)
+        filas, sin_catalogo = [], True
+    if filas:
+        filas.sort(key=lambda f: f.get("papel") != "primaria")
+        return filas[0]["enlace"].strip()
     valor = os.environ.get(f"E6_GDRIVE_{dataset.upper()}")
     if valor:
-        return valor
-    for fila in filas_catalogo():
-        if fila["viz_id"] == f"{EQUIPO}.{dataset}" and "drive.google.com" in (fila.get("enlace") or ""):
-            return fila["enlace"]
-    return None
+        return valor.strip()
+    return DRIVE_RESPALDO.get(dataset) if sin_catalogo else None
 
 
 # ---------------------------------------------------------------------------

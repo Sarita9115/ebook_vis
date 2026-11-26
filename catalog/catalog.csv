@@ -89,13 +89,13 @@ equipo,subtema,viz_id,papel,enlace,valor_referencia,tolerancia,streaming,estado
 6,"Cambio de uso del suelo y expansión urbana en Yucatán y la zona metropolitana de Mérida",6.cambio_suelo,primaria,http://www.conabio.gob.mx/informacion/gis/maps/geo/usv250s7gw.zip,75.95,1.0,no,pendiente
 6,"Cambio de uso del suelo y expansión urbana en Yucatán y la zona metropolitana de Mérida",6.cambio_suelo,secundaria,http://www.conabio.gob.mx/informacion/gis/maps/geo/usv250s6gw.zip,,,no,pendiente
 6,"Cambio de uso del suelo y expansión urbana en Yucatán y la zona metropolitana de Mérida",6.cambio_suelo,secundaria,http://www.conabio.gob.mx/informacion/gis/maps/geo/mun23gw.zip,,,no,pendiente
-6,"Concentración industrial en el corredor Mérida, Umán y Hunucmá",6.corredor_industrial,primaria,https://www.inegi.org.mx/contenidos/masiva/denue/denue_31_csv.zip,72.7,1.0,no,pendiente
+6,"Concentración industrial en el corredor Mérida, Umán y Hunucmá",6.corredor_industrial,primaria,https://www.inegi.org.mx/contenidos/masiva/denue/2026_05/denue_31_0526_csv.zip,72.7,1.0,no,pendiente
 6,"Concentración industrial en el corredor Mérida, Umán y Hunucmá",6.corredor_industrial,secundaria,https://www.inegi.org.mx/contenidos/masiva/denue/2018_11/denue_31_1118_csv.zip,,,no,pendiente
 6,"Concentración industrial en el corredor Mérida, Umán y Hunucmá",6.corredor_industrial,secundaria,https://www.inegi.org.mx/contenidos/masiva/denue/2019_11/denue_31_1119_csv.zip,,,no,pendiente
 6,"Concentración industrial en el corredor Mérida, Umán y Hunucmá",6.corredor_industrial,secundaria,https://www.inegi.org.mx/contenidos/masiva/denue/2020_11/denue_31_1120_csv.zip,,,no,pendiente
 6,"Concentración industrial en el corredor Mérida, Umán y Hunucmá",6.corredor_industrial,secundaria,https://www.inegi.org.mx/contenidos/programas/eic/2025/tabulados/eic2025_poblacion_31.xlsx,,,no,pendiente
 6,"Concentración industrial en el corredor Mérida, Umán y Hunucmá",6.corredor_industrial,secundaria,http://www.conabio.gob.mx/informacion/gis/maps/geo/mun23gw.zip,,,no,pendiente
-6,"Relieve y altura edificada de la zona metropolitana de Mérida vistos desde modelos de elevación de 5 m",6.relieve_5m,primaria,https://www.inegi.org.mx/app/geo2/elevacionesmex/,93.1,1.0,no,pendiente
-6,"Relieve y altura edificada de la zona metropolitana de Mérida vistos desde modelos de elevación de 5 m",6.relieve_5m,secundaria,https://www.inegi.org.mx/contenidos/masiva/denue/denue_31_csv.zip,,,no,pendiente
-6,"Huella construida, altura y densidad empresarial de Mérida",6.huella_construida,primaria,https://docs.overturemaps.org/guides/buildings/,18.7,1.0,no,pendiente
-6,"Huella construida, altura y densidad empresarial de Mérida",6.huella_construida,secundaria,https://www.inegi.org.mx/contenidos/masiva/denue/denue_31_csv.zip,,,no,pendiente
+6,"Relieve y altura edificada de la zona metropolitana de Mérida vistos desde modelos de elevación de 5 m",6.relieve_5m,primaria,https://drive.google.com/file/d/1HNZ5O0e4mtFta-PVj-zyXRKGMt3bWoPD/view?usp=sharing,93.1,1.0,no,pendiente
+6,"Relieve y altura edificada de la zona metropolitana de Mérida vistos desde modelos de elevación de 5 m",6.relieve_5m,secundaria,https://www.inegi.org.mx/contenidos/masiva/denue/2026_05/denue_31_0526_csv.zip,,,no,pendiente
+6,"Huella construida, altura y densidad empresarial de Mérida",6.huella_construida,primaria,https://drive.google.com/file/d/1LKFyAGpaNlmJ0NaimJpTeCR7GPoUVOGU/view?usp=sharing,18.7,1.0,no,pendiente
+6,"Huella construida, altura y densidad empresarial de Mérida",6.huella_construida,secundaria,https://www.inegi.org.mx/contenidos/masiva/denue/2026_05/denue_31_0526_csv.zip,,,no,pendiente
