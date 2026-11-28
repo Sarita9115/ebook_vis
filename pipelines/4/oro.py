@@ -72,7 +72,7 @@ META = {
         fuente_secundaria="IMSS – Trabajadores asegurados en Yucatán, empleos generados oct 2018-abr 2024 "
                           "(boletín del Gobierno de Yucatán, mayo 2024)",
         institucion="Gobierno de Yucatán / IMSS", responsable="Yazira Hernández Rives",
-        archivos=["promesa_empleo_yucatan.xlsx"]),
+        archivos=["documental/promesa_empleo_yucatan.json"]),
     "4.remesas_ied": dict(
         fuente_primaria="Banco de México – Ingresos por remesas por entidad (API pública de Data México), Yucatán",
         fuente_secundaria="Secretaría de Economía – Estadística oficial de la IED por entidad federativa "
@@ -220,7 +220,7 @@ def oro_pulso_ied() -> pd.DataFrame:
 # ---------------------------------------------------------------- 4.promesa_resultado
 def oro_promesa_resultado() -> pd.DataFrame:
     """Dos filas: empleos prometidos en el anuncio de 2022 y empleos formales registrados en el IMSS."""
-    d = _xlsx("promesa_empleo_yucatan.xlsx")
+    d = _plata("4.promesa_empleo_yucatan")
     d = d[d.concepto.isin(["prometido", "registrado_imss"])].copy()
     prometido = float(d.loc[d.concepto == "prometido", "empleos"].iloc[0])
     d["pct_de_lo_prometido"] = d.empleos / prometido * 100
