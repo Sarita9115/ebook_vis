@@ -1,4 +1,6 @@
-"""Equipo 4 · Inversión extranjera en Yucatán: una sola historia, en una sola página.
+"""Equipo 4 · Inversión extranjera en Yucatán: una historia en cuatro partes, cada una en su página.
+
+Cada parte se muestra en la ficha de su subtema, /v/4/{subtema}, la misma que enlaza el menú de la portada.
 
 La página no redibuja ninguna figura: importa `figura` de figures/4/{subtema}/figura.py y le pasa la tabla de
 oro. El texto avanza con el scroll; cada bloque de texto (paso) le indica a la figura qué resaltar.
@@ -13,6 +15,11 @@ from functools import lru_cache
 from pathlib import Path
 
 from dash import Input, Output, callback, dcc, html
+
+try:
+    from app.recorrido import ficha
+except ImportError:
+    from recorrido import ficha
 
 RAIZ = Path(__file__).resolve().parents[2]
 
@@ -157,6 +164,11 @@ def _scrolly(subtema, pasos):
     ])
 
 
+def _num(subtema: str) -> int:
+    """Número del subtema en la lista de la portada (app/recorrido.py)."""
+    return ficha("4", subtema)[1]
+
+
 def _seccion(num, kicker, titulo, entradilla, *cuerpo, id_=None):
     return html.Section(id=id_, className="seccion", children=[
         html.Div(className="seccion-cabeza revelar", children=[
@@ -164,9 +176,8 @@ def _seccion(num, kicker, titulo, entradilla, *cuerpo, id_=None):
         *cuerpo])
 
 
-def layout():
-    sincronizar_oro()
-    c = cifras()
+def _secciones(c) -> dict:
+    """Las cuatro partes de la historia, cada una con su figura, por subtema."""
     a, part, der, gas = c["anual"], c["part"], c["derrama"], c["gasto"]
     pico = a.idxmax()
     salidas = ", ".join(f"{p} ({_n(v, 1)} mdd)" for p, v in c["salidas"].items())
@@ -176,22 +187,10 @@ def layout():
     cambio = lambda k: tot[f"{k}_2023"] / tot[f"{k}_2018"] - 1  # noqa: E731
     q = c["cuadrantes"]
 
-    return html.Div(className="historia", children=[
-        # ---------------------------------------------------------------- portada
-        html.Header(className="portada", children=[
-            html.Div("Inversión extranjera en Yucatán · 2018–2025", className="kicker"),
-            html.H1("El dinero que llega de fuera"),
-            html.P(className="dek", children=(
-                f"Entre 2020 y 2025, empresas de {c['paises']} países movieron dinero hacia Yucatán. "
-                "Esta es la historia de quién apuesta por el estado, cuánto pesa esa apuesta frente al resto del país, "
-                "qué hizo el turismo mientras tanto y qué cambió en los negocios yucatecos.")),
-            html.Div("Equipo 4 · Jorge, Yazira Hernández Rives y Dalila Ku · Visual Modelling, UPY", className="firma"),
-            html.Div("Desliza para empezar ↓", className="desliza"),
-        ]),
-
+    return {
         # ---------------------------------------------------------------- 1 · quién apuesta
-        _seccion(
-            1, "Quién apuesta por el estado", "Un mapa de billetes que cruzan el océano",
+        "ied_por_pais": _seccion(
+            _num("ied_por_pais"), "Quién apuesta por el estado", "Un mapa de billetes que cruzan el océano",
             "Cada billete viaja por la ruta entre el país inversionista y Yucatán. El verde es inversión que llega; "
             "el rojo, sobre una ruta punteada, es dinero que se va: años en que los reembolsos o las ventas de "
             "empresas superaron a la inversión nueva. Elige el periodo y cómo quieres verlo.",
@@ -229,8 +228,8 @@ def layout():
             id_="quien"),
 
         # ---------------------------------------------------------------- 2 · cuánto pesa
-        _seccion(
-            2, "Flujos volátiles, participación baja", "Un gran año no hace una tendencia",
+        "ied_ranking_origen": _seccion(
+            _num("ied_ranking_origen"), "Flujos volátiles, participación baja", "Un gran año no hace una tendencia",
             "Vista desde el resto del país, la inversión extranjera en Yucatán es pequeña y nerviosa: "
             "sube y baja con unas cuantas operaciones grandes.",
             _scrolly("ied_ranking_origen", [
@@ -261,8 +260,8 @@ def layout():
             id_="pesa"),
 
         # ---------------------------------------------------------------- 3 · turismo
-        _seccion(
-            3, "Turismo y derrama económica", "Mientras tanto, el turismo no se detuvo",
+        "turismo_derrama": _seccion(
+            _num("turismo_derrama"), "Turismo y derrama económica", "Mientras tanto, el turismo no se detuvo",
             "La inversión extranjera va y viene. El gasto de quienes visitan el estado, en cambio, creció casi sin "
             "pausa desde la pandemia.",
             _scrolly("turismo_derrama", [
@@ -288,8 +287,8 @@ def layout():
             id_="turismo"),
 
         # ---------------------------------------------------------------- 4 · censos
-        _seccion(
-            4, "Qué cambió en las empresas", "Cinco años en los negocios de 106 municipios",
+        "censos_economicos": _seccion(
+            _num("censos_economicos"), "Qué cambió en las empresas", "Cinco años en los negocios de 106 municipios",
             "Los Censos Económicos fotografían a todos los negocios del estado. Comparar el de 2019 (año de "
             "referencia 2018) con el de 2024 (2023) muestra dónde hubo más negocios, más empleo, o ninguno de los dos.",
             html.Div(className="cifras revelar", children=[
@@ -321,17 +320,42 @@ def layout():
             ]),
             _fuente("censos_economicos"),
             id_="censos"),
+    }
 
-        # ---------------------------------------------------------------- cierre
-        html.Footer(className="cierre revelar", children=[
-            html.H2("Lo que dice la historia"),
-            html.P("El capital extranjero llega a Yucatán en oleadas, sobre todo desde Estados Unidos, y pesa poco "
-                   "frente al resto del país. El turismo, en cambio, creció año con año, y los negocios del estado "
-                   "se multiplicaron fuera de Mérida más rápido que dentro."),
-            html.P(className="pie", children=(
-                "Cifras de IED en millones de dólares; turismo y producción en pesos corrientes. Los datos se leen "
-                "de las tablas de oro del equipo 4; la misma función de cada figura genera la imagen del ebook.")),
-        ]),
+
+# ------------------------------------------------------------------ las cuatro partes, cada una en su página
+# (subtema, número, título). Cada parte se muestra en la ficha de su subtema, /v/4/{subtema}.
+PARTES = [
+    ("ied_por_pais", 1, "Un mapa de billetes que cruzan el océano"),
+    ("ied_ranking_origen", 2, "Un gran año no hace una tendencia"),
+    ("turismo_derrama", 3, "Mientras tanto, el turismo no se detuvo"),
+    ("censos_economicos", 4, "Cinco años en los negocios de 106 municipios"),
+]
+
+
+def ruta_parte(subtema: str) -> str:
+    return f"/v/4/{subtema}"
+
+
+def _cierre():
+    return html.Footer(className="cierre revelar", children=[
+        html.H2("Lo que dice la historia"),
+        html.P("El capital extranjero llega a Yucatán en oleadas, sobre todo desde Estados Unidos, y pesa poco "
+               "frente al resto del país. El turismo, en cambio, creció año con año, y los negocios del estado "
+               "se multiplicaron fuera de Mérida más rápido que dentro."),
+        html.P(className="pie", children=(
+            "Cifras de IED en millones de dólares; turismo y producción en pesos corrientes. Los datos se leen "
+            "de las tablas de oro del equipo 4; la misma función de cada figura genera la imagen del ebook.")),
+    ])
+
+
+def layout_parte(subtema: str):
+    """Una sola parte de la historia, con su figura. La última cierra la historia."""
+    sincronizar_oro()
+    return html.Div(className="historia historia-parte", children=[
+        html.Nav(className="migas", children=[html.A("Volver al recorrido", href="/")]),
+        _secciones(cifras())[subtema],
+        *([_cierre()] if subtema == PARTES[-1][0] else []),
     ])
 
 
