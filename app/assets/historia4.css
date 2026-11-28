@@ -110,3 +110,9 @@ body { margin: 0; background: var(--papel); color: var(--tinta); font-family: va
 .chip small { font-size: 11px; font-variant-numeric: tabular-nums; }
 .chip.activo { background: var(--tinta); color: white; border-color: var(--tinta); }
 .chip.activo small { color: white !important; }
+
+/* Página de una sola parte (/v/4/<subtema>) */
+.migas { padding: 28px 0 0; font-size: 14px; }
+.migas a { color: var(--tinta-2); text-decoration: underline; text-underline-offset: 3px; }
+.migas a:hover { color: var(--azul); }
+.historia-parte .seccion { padding-top: 48px; }
