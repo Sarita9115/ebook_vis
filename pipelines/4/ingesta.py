@@ -2,6 +2,9 @@
 
 - Archivos entregados por el equipo (datos/4/): se suben tal cual. La fecha de obtención es la fecha del archivo.
 - INEGI (Censos Económicos): se descargan directo de la URL oficial al bucket, sin pasar por la carpeta.
+- Data México (API pública de la Secretaría de Economía): se vuelve a consultar en cada corrida. Si la
+  respuesta cambió, el objeto se reemplaza con la fecha del día: es la fuente en streaming del equipo
+  (IED trimestral de Yucatán y remesas de Banxico por entidad).
 
 Cada objeto guarda en sus metadatos: fecha-obtencion, origen y sha256. Es idempotente: un objeto que ya está en
 bronce con el mismo contenido no se vuelve a subir, y los de INEGI no se vuelven a descargar.
@@ -41,6 +44,7 @@ ARCHIVOS_LOCALES = [
     "turismo_derrama_trimestral_nacional_internacional.xlsx",
     "turismo_comparativos_4T_y_anual.xlsx",
     "02_llegada_turistas_ocupacion_yucatan.xlsx",
+    "promesa_empleo_yucatan.xlsx",
 ]
 
 # Fuentes con descarga directa: nombre en bronce -> URL oficial.
@@ -49,6 +53,17 @@ ARCHIVOS_WEB = {
         "https://www.inegi.org.mx/contenidos/programas/ce/2019/Datosabiertos/ce2019_yuc_csv.zip",
     "inegi/conjunto_de_datos_ce_yuc_2024_csv.zip":
         "https://www.inegi.org.mx/contenidos/programas/ce/2024/datosabiertos/conjunto_de_datos_ce_yuc_2024_csv.zip",
+}
+
+
+# API de Data México (Secretaría de Economía): se consultan en cada corrida (streaming).
+DATAMEXICO = "https://www.economia.gob.mx/apidatamexico/tesseract/data.jsonrecords"
+ARCHIVOS_API = {
+    "datamexico/ied_yucatan_trimestral.json":
+        f"{DATAMEXICO}?cube=fdi_2_state_investment&drilldowns=Quarter&measures=Investment&State=31",
+    "datamexico/remesas_yucatan_anual.json":
+        f"{DATAMEXICO}?cube=banxico_mun_income_remittances&drilldowns=Year,State&measures=Remittance+Amount"
+        "&State=31",
 }
 
 
@@ -88,6 +103,9 @@ def ingerir() -> dict[str, str]:
             resultado[nombre] = "ya estaba en bronce"
             continue
         with urllib.request.urlopen(url, timeout=300) as r:
+            resultado[nombre] = _subir(nombre, r.read(), date.today(), url)
+    for nombre, url in ARCHIVOS_API.items():
+        with urllib.request.urlopen(url, timeout=120) as r:
             resultado[nombre] = _subir(nombre, r.read(), date.today(), url)
     return resultado
 

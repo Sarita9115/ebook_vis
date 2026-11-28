@@ -3,7 +3,9 @@
 La página no redibuja ninguna figura: importa `figura` de figures/4/{subtema}/figura.py y le pasa la tabla de
 oro. El texto avanza con el scroll; cada bloque de texto (paso) le indica a la figura qué resaltar.
 Orden de la historia: quién apuesta (4.ied_por_pais) → cuánto pesa (4.ied_ranking_origen) →
-mientras tanto, el turismo (4.turismo_derrama) → qué cambió en las empresas (4.censos_economicos).
+con qué ritmo llega (4.pulso_ied) → mientras tanto, el turismo (4.turismo_derrama) → qué cambió en las empresas
+(4.censos_economicos) → cuánto empleo se prometió y cuánto llegó (4.promesa_resultado) → el otro dinero que llega
+de fuera: las remesas (4.remesas_ied).
 """
 from __future__ import annotations
 
@@ -26,7 +28,8 @@ def _modulo(ruta: Path, nombre: str):
 
 oro = _modulo(RAIZ / "pipelines" / "4" / "oro.py", "equipo4_oro")
 FIG = {s: _modulo(RAIZ / "figures" / "4" / s / "figura.py", f"equipo4_{s}")
-       for s in ("ied_por_pais", "ied_ranking_origen", "turismo_derrama", "censos_economicos")}
+       for s in ("ied_por_pais", "ied_ranking_origen", "turismo_derrama", "censos_economicos", "pulso_ied",
+                 "promesa_resultado", "remesas_ied")}
 
 
 @lru_cache(maxsize=None)
@@ -123,6 +126,23 @@ def cifras() -> dict:
     )
 
 
+def cifras_yazira() -> dict:
+    """Cifras que citan las secciones del pulso, la promesa y las remesas (salen del oro)."""
+    pu = datos("pulso_ied").sort_values(["anio", "trimestre"]).reset_index(drop=True)
+    alto, bajo = pu.loc[pu.ied_mdd.idxmax()], pu.loc[pu.ied_mdd.idxmin()]
+    p20 = pu[pu.anio == 2020]
+    a24 = pu[pu.anio == 2024]
+    pr = datos("promesa_resultado").set_index("concepto")
+    re = datos("remesas_ied").sort_values("anio").reset_index(drop=True)
+    gana_ied = re[re.ied_mdd > re.remesas_mdd]
+    return dict(
+        pu=pu, alto=alto, bajo=bajo, p20_min=p20.loc[p20.ied_mdd.idxmin()], p20_max=p20.loc[p20.ied_mdd.idxmax()],
+        a24_max=a24.loc[a24.ied_mdd.idxmax()] if len(a24) else pu.loc[pu.ied_mdd.idxmax()], ultimo=pu.iloc[-1],
+        anual=pu.groupby("anio").ied_mdd.sum(), prom=pr.loc["prometido"], reg=pr.loc["registrado_imss"],
+        re=re, gana_ied=gana_ied, veces=re.remesas_mdd.sum() / re.ied_mdd.sum(),
+    )
+
+
 def _n(v, d=0):
     return f"{v:,.{d}f}".replace("-", "−")
 
@@ -175,6 +195,7 @@ def layout():
     tot = c["tot"]
     cambio = lambda k: tot[f"{k}_2023"] / tot[f"{k}_2018"] - 1  # noqa: E731
     q = c["cuadrantes"]
+    y = cifras_yazira()
 
     return html.Div(className="historia", children=[
         # ---------------------------------------------------------------- portada
@@ -260,9 +281,40 @@ def layout():
             _fuente("ied_ranking_origen"),
             id_="pesa"),
 
-        # ---------------------------------------------------------------- 3 · turismo
+        # ---------------------------------------------------------------- 3 · pulso (Yazira)
         _seccion(
-            3, "Turismo y derrama económica", "Mientras tanto, el turismo no se detuvo",
+            3, "Con qué ritmo llega", "El pulso de la inversión extranjera",
+            "Cada latido del monitor es un trimestre: entre más alto el pico, más dinero de fuera llegó a Yucatán. "
+            "Un latido hacia abajo es un trimestre en que salió más de lo que entró.",
+            _scrolly("pulso_ied", [
+                (1, [html.H3("2020: el pulso casi se apaga"),
+                     html.P(f"El año abrió con {_n(y['p20_max'].ied_mdd)} mdd en el primer trimestre. Con la pandemia, "
+                            f"el {y['p20_min'].periodo} llegaron apenas {_n(y['p20_min'].ied_mdd, 1)} millones de "
+                            "dólares.")]),
+                (2, [html.H3(f"{y['alto'].periodo}: taquicardia"),
+                     html.P(f"El trimestre más alto del periodo: {_n(y['alto'].ied_mdd, 1)} mdd en tres meses. "
+                            f"Ese año sumó {_n(y['anual'][int(y['alto'].anio)])} mdd"
+                            + (", más que 2020 y 2021 juntos." if y['anual'][int(y['alto'].anio)] >
+                               y['anual'].get(2020, 0) + y['anual'].get(2021, 0) else "."))]),
+                (3, [html.H3(f"{int(y['bajo'].anio)}: arritmia"),
+                     html.P(f"El {y['a24_max'].periodo} entraron {_n(y['a24_max'].ied_mdd)} mdd y el "
+                            f"{y['bajo'].periodo} salieron {_n(-y['bajo'].ied_mdd)}: reembolsos y ventas de empresas "
+                            "superaron a la inversión nueva. Un año normal en el total puede esconder sobresaltos.")]),
+                (0, [html.H3("El trazo completo"),
+                     html.P(f"En promedio llegaron {_n(y['pu'].ied_mdd.mean())} mdd por trimestre, pero casi nunca "
+                            "el promedio: el capital extranjero llega en latidos sueltos, no en un ritmo constante."),
+                     html.Div(className="nota-metodo", children=[
+                         html.B("Fuente en streaming. "),
+                         f"Esta serie se consulta en cada corrida a la API de Data México; hoy llega hasta el "
+                         f"{y['ultimo'].periodo}. Cuando la Secretaría de Economía publique un trimestre nuevo, "
+                         "aparecerá aquí."])]),
+            ]),
+            _fuente("pulso_ied"),
+            id_="pulso"),
+
+        # ---------------------------------------------------------------- 4 · turismo
+        _seccion(
+            4, "Turismo y derrama económica", "Mientras tanto, el turismo no se detuvo",
             "La inversión extranjera va y viene. El gasto de quienes visitan el estado, en cambio, creció casi sin "
             "pausa desde la pandemia.",
             _scrolly("turismo_derrama", [
@@ -287,9 +339,9 @@ def layout():
             _fuente("turismo_derrama"),
             id_="turismo"),
 
-        # ---------------------------------------------------------------- 4 · censos
+        # ---------------------------------------------------------------- 5 · censos
         _seccion(
-            4, "Qué cambió en las empresas", "Cinco años en los negocios de 106 municipios",
+            5, "Qué cambió en las empresas", "Cinco años en los negocios de 106 municipios",
             "Los Censos Económicos fotografían a todos los negocios del estado. Comparar el de 2019 (año de "
             "referencia 2018) con el de 2024 (2023) muestra dónde hubo más negocios, más empleo, o ninguno de los dos.",
             html.Div(className="cifras revelar", children=[
@@ -322,12 +374,58 @@ def layout():
             _fuente("censos_economicos"),
             id_="censos"),
 
+        # ---------------------------------------------------------------- 6 · promesa (Yazira)
+        _seccion(
+            6, "Promesa contra resultado", "Se prometieron empleos; ¿cuántos llegaron?",
+            f"En junio de 2022 el Gobierno de Yucatán anunció {int(y['prom'].proyectos)} proyectos de inversión "
+            f"privada que generarían {_n(y['prom'].empleos)} empleos. Cada figura vale mil empleos.",
+            _scrolly("promesa_resultado", [
+                (1, [html.H3(f"{_n(y['prom'].empleos / 1000)} mil empleos prometidos"),
+                     html.P(f"La cartera sumaba más de {_n(y['prom'].inversion_mdp)} millones de pesos. La cifra "
+                            "incluía empleos directos e indirectos.")]),
+                (2, [html.H3(f"{_n(y['reg'].empleos / 1000)} mil con casco"),
+                     html.P(f"En el periodo {y['reg'].periodo}, el IMSS registró {_n(y['reg'].empleos)} trabajadores "
+                            f"nuevos asegurados en Yucatán: {y['reg'].pct_de_lo_prometido:.0f} % de lo anunciado.")]),
+                (0, [html.H3(f"1 de cada {round(100 / y['reg'].pct_de_lo_prometido)}"),
+                     html.P("La brecha es la pregunta, no la conclusión: la promesa sumaba empleos indirectos y "
+                            "plazos de varios años; el IMSS solo cuenta el empleo formal.")]),
+            ]),
+            _fuente("promesa_resultado"),
+            id_="promesa"),
+
+        # ---------------------------------------------------------------- 7 · remesas (Yazira)
+        _seccion(
+            7, "El otro dinero que llega de fuera", "Sobres contra maletines",
+            "Las empresas extranjeras no son las únicas que mandan dinero a Yucatán. Cada sobre son 50 millones de "
+            "dólares que los migrantes enviaron a sus familias; cada maletín, 50 millones de inversión extranjera.",
+            _scrolly("remesas_ied", [
+                (1, [html.H3("Los sobres ganan desde el principio"),
+                     html.P(f"En {y['re'].anio.iloc[0]} llegaron {_n(y['re'].remesas_mdd.iloc[0])} mdd en remesas "
+                            f"contra {_n(y['re'].ied_mdd.iloc[0])} de inversión extranjera.")]),
+                (2, [html.H3(f"{', '.join(map(str, y['gana_ied'].anio)) or 'Ningún año'}: los maletines, una vez"),
+                     html.P("Solo entonces la inversión extranjera superó a las remesas"
+                            + (": fue el año de la taquicardia del monitor." if int(y['alto'].anio) in
+                               set(y['gana_ied'].anio) else "."))]),
+                (3, [html.H3("La brecha se abre"),
+                     html.P(f"En {y['re'].anio.iloc[-1]} las remesas llegaron a {_n(y['re'].remesas_mdd.iloc[-1])} "
+                            f"mdd, {y['re'].veces.iloc[-1]:.1f} veces la inversión extranjera de ese año.")]),
+                (0, [html.H3(f"{y['veces']:.1f} veces más en sobres"),
+                     html.P(f"Entre {y['re'].anio.iloc[0]} y {y['re'].anio.iloc[-1]} llegaron "
+                            f"{_n(y['re'].remesas_mdd.sum())} mdd en remesas y {_n(y['re'].ied_mdd.sum())} en "
+                            "inversión extranjera. El dinero de las familias fue más constante que el de las "
+                            "empresas.")]),
+            ]),
+            _fuente("remesas_ied"),
+            id_="remesas"),
+
         # ---------------------------------------------------------------- cierre
         html.Footer(className="cierre revelar", children=[
             html.H2("Lo que dice la historia"),
             html.P("El capital extranjero llega a Yucatán en oleadas, sobre todo desde Estados Unidos, y pesa poco "
                    "frente al resto del país. El turismo, en cambio, creció año con año, y los negocios del estado "
                    "se multiplicaron fuera de Mérida más rápido que dentro."),
+            html.P("Los empleos que se anunciaron con esa inversión aparecen solo en parte en el empleo formal, y el "
+                   "dinero que más llega de fuera no viene de empresas: viene en las remesas de los migrantes."),
             html.P(className="pie", children=(
                 "Cifras de IED en millones de dólares; turismo y producción en pesos corrientes. Los datos se leen "
                 "de las tablas de oro del equipo 4; la misma función de cada figura genera la imagen del ebook.")),
@@ -348,5 +446,6 @@ def _vincular_paso(subtema):
         return fig_paso(subtema, int(paso or 0))
 
 
-for _subtema in ("ied_ranking_origen", "turismo_derrama", "censos_economicos"):
+for _subtema in ("ied_ranking_origen", "pulso_ied", "turismo_derrama", "censos_economicos", "promesa_resultado",
+                 "remesas_ied"):
     _vincular_paso(_subtema)
