@@ -70,9 +70,9 @@ CAPITULOS = [
         "subtemas": [
             ("ied_por_pais", "Un mapa de billetes que cruzan el océano"),
             ("censos_economicos", "Cinco años en los negocios de 106 municipios"),
-            ("pulso_ied", "El pulso de la inversión extranjera: ritmo de la IED en Yucatán (2020-2025)"),
-            ("promesa_resultado", "Promesa contra resultado: empleos anunciados y empleo formal en el IMSS"),
-            ("remesas_ied", "Sobres contra maletines: remesas e inversión extranjera en Yucatán (2020-2025)"),
+            ("pulso_ied", "El pulso de la inversión extranjera"),
+            ("promesa_resultado", "Se prometieron empleos; ¿cuántos llegaron?"),
+            ("remesas_ied", "Sobres contra maletines"),
             ("ied_ranking_origen", "Un gran año no hace una tendencia"),
             ("turismo_derrama", "Mientras tanto, el turismo no se detuvo"),
             ("apertura_exterior", "Efecto económico de la apertura al exterior"),

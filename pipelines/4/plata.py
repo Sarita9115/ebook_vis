@@ -5,6 +5,9 @@ Plata limpia y tipa; no arma nada específico de una figura (eso es oro). Tablas
 - plata."4.bronce_archivos"      catálogo del bronce leído: archivo, fecha de obtención, origen, sha256.
 - plata."4.ied_entidad_pais_trim" IED por entidad, país de origen y trimestre (SE), recortada a la península.
 - plata."4.ce_municipio"          Censos Económicos (INEGI): totales por municipio de Yucatán, años 2018 y 2023.
+- plata."4.ied_yucatan_trim_dm"   IED trimestral de Yucatán según la API de Data México (SE), en mdd.
+- plata."4.remesas_yucatan_dm"    Remesas anuales de Yucatán según la API de Data México (Banxico), en mdd.
+- plata."4.promesa_empleo_yucatan" Empleos prometidos (anuncio 2022) y registrados en el IMSS (documental).
 - plata."4.<archivo xlsx>"        cada xlsx del equipo, con el texto en doble codificación reparado.
                                   ied_por_entidad_2018_2025 conserva las 32 entidades: oro calcula el lugar
                                   de Yucatán en el país.
@@ -47,6 +50,9 @@ XLSX = [
 SE_CSV = "b2026_01t_act_ef_origen.csv"
 CE_2019 = "inegi/ce2019_yuc_csv.zip"
 CE_2024 = "inegi/conjunto_de_datos_ce_yuc_2024_csv.zip"
+DM_IED = "datamexico/ied_yucatan_trimestral.json"
+DM_REMESAS = "datamexico/remesas_yucatan_anual.json"
+PROMESA = "documental/promesa_empleo_yucatan.json"
 
 
 def _reparar_texto(v):
@@ -93,8 +99,36 @@ def plata_ce_municipio() -> pd.DataFrame:
     return d[["anio", "cve_mun", "municipio", "ue", "personal", "produccion_mdp"]]
 
 
+def _registros_datamexico(nombre: str) -> pd.DataFrame:
+    """La API responde {"data": [...]} (o directamente la lista de registros)."""
+    import json
+    crudo = json.load(comun.bajar(nombre))
+    return pd.DataFrame(crudo["data"] if isinstance(crudo, dict) else crudo)
+
+
+def plata_ied_trim_dm() -> pd.DataFrame:
+    """Una fila por trimestre: IED de Yucatán en millones de dólares (la API ya la publica en mdd)."""
+    d = _registros_datamexico(DM_IED)
+    t = d["Quarter"].astype(str)  # "2022-Q2"
+    return pd.DataFrame({"anio": t.str[:4].astype(int), "trimestre": t.str[-1].astype(int),
+                         "ied_mdd": d["Investment"].astype(float)}).sort_values(["anio", "trimestre"])
+
+
+def plata_remesas_dm() -> pd.DataFrame:
+    """Una fila por año: remesas recibidas en Yucatán. La API las publica en dólares; aquí en millones."""
+    d = _registros_datamexico(DM_REMESAS)
+    return pd.DataFrame({"anio": d["Year"].astype(int),
+                         "remesas_mdd": d["Remittance Amount"].astype(float) / 1e6}).sort_values("anio")
+
+
+def plata_promesa_empleo() -> pd.DataFrame:
+    """Empleos prometidos en el anuncio de 2022 y empleos formales registrados en el IMSS (fuente documental)."""
+    import json
+    return pd.DataFrame(json.load(comun.bajar(PROMESA)))
+
+
 def bronce_archivos() -> pd.DataFrame:
-    nombres = [SE_CSV, CE_2019, CE_2024, *XLSX]
+    nombres = [SE_CSV, CE_2019, CE_2024, DM_IED, DM_REMESAS, PROMESA, *XLSX]
     return pd.DataFrame([{"archivo": n, "objeto": f"{comun.BUCKET}/{comun.objeto(n)}", **comun.metadatos(n)}
                          for n in nombres])
 
@@ -104,6 +138,9 @@ def construir() -> dict[str, pd.DataFrame]:
         "4.bronce_archivos": bronce_archivos(),
         "4.ied_entidad_pais_trim": plata_ied_entidad_pais_trim(),
         "4.ce_municipio": plata_ce_municipio(),
+        "4.ied_yucatan_trim_dm": plata_ied_trim_dm(),
+        "4.remesas_yucatan_dm": plata_remesas_dm(),
+        "4.promesa_empleo_yucatan": plata_promesa_empleo(),
         **{f"4.{Path(n).stem}": plata_xlsx(n) for n in XLSX},
     }
     comun.escribir(ESQUEMA, tablas)

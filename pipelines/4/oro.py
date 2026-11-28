@@ -61,6 +61,24 @@ META = {
         institucion="SEFOTUR Yucatán", responsable="Dalila Ku",
         archivos=["turismo_derrama_1T_2020_2026.xlsx", "turismo_derrama_trimestral_nacional_internacional.xlsx",
                   "turismo_comparativos_4T_y_anual.xlsx", "02_llegada_turistas_ocupacion_yucatan.xlsx"]),
+    "4.pulso_ied": dict(
+        fuente_primaria="Secretaría de Economía – Data México: IED por estado y trimestre (API pública), Yucatán",
+        fuente_secundaria="Secretaría de Economía – Estadística oficial de la IED por entidad federativa "
+                          "(cifras anuales 2018-2025)",
+        institucion="Secretaría de Economía", responsable="Yazira Hernández Rives",
+        archivos=["datamexico/ied_yucatan_trimestral.json", "ied_por_entidad_2018_2025.xlsx"]),
+    "4.promesa_resultado": dict(
+        fuente_primaria="Gobierno de Yucatán – Anuncio de 245 proyectos de inversión privada (22 de junio de 2022)",
+        fuente_secundaria="IMSS – Trabajadores asegurados en Yucatán, empleos generados oct 2018-abr 2024 "
+                          "(boletín del Gobierno de Yucatán, mayo 2024)",
+        institucion="Gobierno de Yucatán / IMSS", responsable="Yazira Hernández Rives",
+        archivos=["documental/promesa_empleo_yucatan.json"]),
+    "4.remesas_ied": dict(
+        fuente_primaria="Banco de México – Ingresos por remesas por entidad (API pública de Data México), Yucatán",
+        fuente_secundaria="Secretaría de Economía – Estadística oficial de la IED por entidad federativa "
+                          "(cifras anuales 2018-2025)",
+        institucion="Banco de México / Secretaría de Economía", responsable="Yazira Hernández Rives",
+        archivos=["datamexico/remesas_yucatan_anual.json", "ied_por_entidad_2018_2025.xlsx"]),
 }
 
 # Coordenadas (lat, lon) de cada país para el mapa de flujos; Mérida es el destino.
@@ -181,6 +199,45 @@ def oro_turismo_derrama() -> pd.DataFrame:
     return _metadatos(pd.DataFrame(filas, columns=["serie", "periodo", "valor", "unidad"]), "4.turismo_derrama")
 
 
+# ---------------------------------------------------------------- 4.pulso_ied
+def _ied_anual_se() -> pd.Series:
+    """IED anual de Yucatán según la estadística oficial de la SE (secundaria), indexada por año."""
+    ent = _xlsx("ied_por_entidad_2018_2025.xlsx")
+    yuc = ent[ent.entidad == "Yucatán"].iloc[0]
+    return pd.Series({a: float(yuc[f"ied_{a}_mdd"]) for a in range(2018, 2026) if f"ied_{a}_mdd" in yuc})
+
+
+def oro_pulso_ied() -> pd.DataFrame:
+    """Una fila por trimestre desde 2020: IED de Yucatán (Data México) y, como contraste, el total anual oficial."""
+    d = _plata("4.ied_yucatan_trim_dm")
+    d = d[d.anio >= 2020].copy()
+    d["periodo"] = d.anio.astype(str) + "-T" + d.trimestre.astype(str)
+    d["ied_anual_mdd"] = d.groupby("anio").ied_mdd.transform("sum")
+    d["ied_anual_se_mdd"] = d.anio.map(_ied_anual_se())
+    return _metadatos(d.reset_index(drop=True), "4.pulso_ied")
+
+
+# ---------------------------------------------------------------- 4.promesa_resultado
+def oro_promesa_resultado() -> pd.DataFrame:
+    """Dos filas: empleos prometidos en el anuncio de 2022 y empleos formales registrados en el IMSS."""
+    d = _plata("4.promesa_empleo_yucatan")
+    d = d[d.concepto.isin(["prometido", "registrado_imss"])].copy()
+    prometido = float(d.loc[d.concepto == "prometido", "empleos"].iloc[0])
+    d["pct_de_lo_prometido"] = d.empleos / prometido * 100
+    return _metadatos(d.reset_index(drop=True), "4.promesa_resultado")
+
+
+# ---------------------------------------------------------------- 4.remesas_ied
+def oro_remesas_ied() -> pd.DataFrame:
+    """Una fila por año completo (2020 en adelante): remesas (Banxico) e IED (SE) recibidas por Yucatán, en mdd."""
+    r = _plata("4.remesas_yucatan_dm")
+    ied = _ied_anual_se()
+    d = r[r.anio.between(2020, int(ied.index.max()))].copy()
+    d["ied_mdd"] = d.anio.map(ied)
+    d["veces"] = d.remesas_mdd / d.ied_mdd
+    return _metadatos(d.dropna(subset=["ied_mdd"]).reset_index(drop=True), "4.remesas_ied")
+
+
 def contexto_turismo() -> pd.DataFrame:
     """Llegadas y ocupación (SEFOTUR, nov 2025): secundaria que da cifras para el texto de la historia."""
     return _xlsx("02_llegada_turistas_ocupacion_yucatan.xlsx")
@@ -191,6 +248,9 @@ CONSTRUCTORES = {
     "4.censos_economicos": oro_censos_economicos,
     "4.ied_ranking_origen": oro_ied_ranking_origen,
     "4.turismo_derrama": oro_turismo_derrama,
+    "4.pulso_ied": oro_pulso_ied,
+    "4.promesa_resultado": oro_promesa_resultado,
+    "4.remesas_ied": oro_remesas_ied,
     CONTEXTO: contexto_turismo,
 }
 
